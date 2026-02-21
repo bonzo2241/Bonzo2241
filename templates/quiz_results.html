@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Результаты: {{ topic.title }}{% endblock %}
+{% block content %}
+<div class="breadcrumb">
+    <a href="{{ url_for('student_dashboard') }}">Темы</a> &raquo;
+    <a href="{{ url_for('view_topic', topic_id=topic.id) }}">{{ topic.title }}</a> &raquo; Результаты
+</div>
+
+<div class="section-card">
+    <h1>Результаты теста</h1>
+    <div class="result-summary {% if pct >= 70 %}result-good{% elif pct >= 50 %}result-ok{% else %}result-bad{% endif %}">
+        <div class="result-score">{{ pct }}%</div>
+        <p>Правильных ответов: <strong>{{ correct }}</strong> из <strong>{{ total }}</strong></p>
+        {% if pct >= 70 %}
+            <p class="result-msg">Отличный результат!</p>
+        {% elif pct >= 50 %}
+            <p class="result-msg">Неплохо, но есть над чем поработать.</p>
+        {% else %}
+            <p class="result-msg">Рекомендуется повторить материал и пройти тест снова.</p>
+        {% endif %}
+    </div>
+
+    <h2>Разбор ответов</h2>
+    {% for r in results %}
+    <div class="answer-review {% if r.is_correct %}answer-correct{% else %}answer-wrong{% endif %}">
+        <p class="question-text">{{ loop.index }}. {{ r.question.text }}</p>
+        <p>
+            Ваш ответ: <strong>{{ r.chosen }}</strong>
+            {% if not r.is_correct %}
+            — Правильный ответ: <strong>{{ r.question.correct_answer }}</strong>
+            {% endif %}
+        </p>
+        {% if r.question.explanation %}
+        <p class="explanation">{{ r.question.explanation }}</p>
+        {% endif %}
+    </div>
+    {% endfor %}
+
+    <div class="result-actions">
+        <a href="{{ url_for('quiz', topic_id=topic.id) }}" class="btn btn-primary">Пройти ещё раз</a>
+        <a href="{{ url_for('student_dashboard') }}" class="btn btn-outline">К списку тем</a>
+    </div>
+</div>
+{% endblock %}

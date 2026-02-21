@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Добавить вопрос{% endblock %}
+{% block content %}
+<div class="breadcrumb">
+    <a href="{{ url_for('teacher_dashboard') }}">Панель</a> &raquo;
+    <a href="{{ url_for('manage_topic', topic_id=topic.id) }}">{{ topic.title }}</a> &raquo;
+    Добавить вопрос
+</div>
+
+<div class="section-card form-card">
+    <h1>Добавить вопрос</h1>
+    <p class="text-muted">Тема: {{ topic.title }}</p>
+
+    <form method="POST">
+        <div class="form-group">
+            <label for="text">Текст вопроса</label>
+            <textarea id="text" name="text" rows="3" required placeholder="Введите текст вопроса…"></textarea>
+        </div>
+        <div class="form-group">
+            <label for="option_a">Вариант A</label>
+            <input type="text" id="option_a" name="option_a" required>
+        </div>
+        <div class="form-group">
+            <label for="option_b">Вариант B</label>
+            <input type="text" id="option_b" name="option_b" required>
+        </div>
+        <div class="form-group">
+            <label for="option_c">Вариант C</label>
+            <input type="text" id="option_c" name="option_c" required>
+        </div>
+        <div class="form-group">
+            <label for="option_d">Вариант D</label>
+            <input type="text" id="option_d" name="option_d" required>
+        </div>
+        <div class="form-group">
+            <label for="correct_answer">Правильный ответ</label>
+            <select id="correct_answer" name="correct_answer">
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+                <option value="D">D</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="explanation">Пояснение (необязательно)</label>
+            <textarea id="explanation" name="explanation" rows="2" placeholder="Объяснение правильного ответа…"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Добавить вопрос</button>
+        <a href="{{ url_for('manage_topic', topic_id=topic.id) }}" class="btn btn-outline">Отмена</a>
+    </form>
+</div>
+{% endblock %}

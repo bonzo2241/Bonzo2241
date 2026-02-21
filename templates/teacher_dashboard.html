@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Панель преподавателя{% endblock %}
+{% block content %}
+<h1>Панель преподавателя</h1>
+
+<div class="dashboard-grid">
+    <!-- Reports summary -->
+    <div class="section-card">
+        <h3>Уведомления от агентов
+            {% if unread_count %}
+            <span class="badge badge-danger">{{ unread_count }} новых</span>
+            {% endif %}
+        </h3>
+        {% if reports %}
+        <div class="reports-preview">
+            {% for report in reports[:5] %}
+            <div class="report-item report-{{ report.severity }}">
+                <span class="report-agent">{{ report.agent_type }}</span>
+                <p>{{ report.message }}</p>
+                <small>{{ report.created_at.strftime('%d.%m.%Y %H:%M') }}</small>
+            </div>
+            {% endfor %}
+        </div>
+        <a href="{{ url_for('teacher_reports') }}" class="btn btn-outline btn-sm">Все отчёты</a>
+        {% else %}
+        <p class="text-muted">Уведомлений пока нет.</p>
+        {% endif %}
+    </div>
+
+    <!-- Students overview -->
+    <div class="section-card">
+        <h3>Студенты</h3>
+        {% if student_stats %}
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Студент</th>
+                        <th>Ответов</th>
+                        <th>Результат</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ss in student_stats %}
+                    <tr>
+                        <td>{{ ss.student.full_name or ss.student.username }}</td>
+                        <td>{{ ss.total }}</td>
+                        <td>
+                            {% if ss.pct is not none %}
+                            <span class="badge {% if ss.pct >= 70 %}badge-success{% elif ss.pct >= 50 %}badge-warning{% else %}badge-danger{% endif %}">
+                                {{ ss.pct }}%
+                            </span>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td><a href="{{ url_for('student_detail', student_id=ss.student.id) }}" class="btn btn-sm btn-outline">Подробнее</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">Студенты ещё не зарегистрированы.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Topics -->
+<div class="section-card">
+    <div class="section-header">
+        <h3>Мои темы</h3>
+        <a href="{{ url_for('create_topic') }}" class="btn btn-primary">Создать тему</a>
+    </div>
+    {% if topics %}
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Название</th>
+                    <th>Сложность</th>
+                    <th>Вопросов</th>
+                    <th>Создано</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for topic in topics %}
+                <tr>
+                    <td>{{ topic.title }}</td>
+                    <td>
+                        <span class="badge badge-diff-{{ topic.difficulty }}">
+                            {% if topic.difficulty == 1 %}Легко{% elif topic.difficulty == 2 %}Средне{% else %}Сложно{% endif %}
+                        </span>
+                    </td>
+                    <td>{{ topic.questions|length }}</td>
+                    <td>{{ topic.created_at.strftime('%d.%m.%Y') }}</td>
+                    <td><a href="{{ url_for('manage_topic', topic_id=topic.id) }}" class="btn btn-sm btn-outline">Управление</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-muted">Вы ещё не создали ни одной темы.</p>
+    {% endif %}
+</div>
+{% endblock %}

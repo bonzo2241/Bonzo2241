@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}{{ topic.title }}{% endblock %}
+{% block content %}
+<div class="breadcrumb">
+    <a href="{{ url_for('student_dashboard') }}">Темы</a> &raquo; {{ topic.title }}
+</div>
+
+<div class="section-card">
+    <h1>{{ topic.title }}</h1>
+    <span class="badge badge-diff-{{ topic.difficulty }}">
+        {% if topic.difficulty == 1 %}Легко{% elif topic.difficulty == 2 %}Средне{% else %}Сложно{% endif %}
+    </span>
+    <div class="topic-full-desc">
+        <p>{{ topic.description }}</p>
+    </div>
+    <div class="topic-info">
+        <p>Количество вопросов: <strong>{{ topic.questions|length }}</strong></p>
+        <p>Автор: <strong>{{ topic.creator.full_name or topic.creator.username }}</strong></p>
+        <p>Создано: <strong>{{ topic.created_at.strftime('%d.%m.%Y') }}</strong></p>
+    </div>
+    {% if topic.questions|length > 0 %}
+    <a href="{{ url_for('quiz', topic_id=topic.id) }}" class="btn btn-primary">Начать тестирование</a>
+    {% else %}
+    <p class="text-muted">Вопросы по этой теме ещё не добавлены.</p>
+    {% endif %}
+</div>
+{% endblock %}

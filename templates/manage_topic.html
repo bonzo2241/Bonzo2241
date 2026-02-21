@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}{{ topic.title }} — Управление{% endblock %}
+{% block content %}
+<div class="breadcrumb">
+    <a href="{{ url_for('teacher_dashboard') }}">Панель</a> &raquo; {{ topic.title }}
+</div>
+
+<div class="section-card">
+    <div class="section-header">
+        <h1>{{ topic.title }}</h1>
+        <span class="badge badge-diff-{{ topic.difficulty }}">
+            {% if topic.difficulty == 1 %}Легко{% elif topic.difficulty == 2 %}Средне{% else %}Сложно{% endif %}
+        </span>
+    </div>
+    <p>{{ topic.description }}</p>
+</div>
+
+<div class="section-card">
+    <div class="section-header">
+        <h2>Вопросы ({{ questions|length }})</h2>
+        <a href="{{ url_for('add_question', topic_id=topic.id) }}" class="btn btn-primary">Добавить вопрос</a>
+    </div>
+
+    {% if questions %}
+    {% for q in questions %}
+    <div class="question-manage-card">
+        <h4>Вопрос {{ loop.index }}</h4>
+        <p class="question-text">{{ q.text }}</p>
+        <div class="options-preview">
+            <span class="{% if q.correct_answer == 'A' %}option-correct{% endif %}">A: {{ q.option_a }}</span>
+            <span class="{% if q.correct_answer == 'B' %}option-correct{% endif %}">B: {{ q.option_b }}</span>
+            <span class="{% if q.correct_answer == 'C' %}option-correct{% endif %}">C: {{ q.option_c }}</span>
+            <span class="{% if q.correct_answer == 'D' %}option-correct{% endif %}">D: {{ q.option_d }}</span>
+        </div>
+        {% if q.explanation %}
+        <p class="explanation"><strong>Пояснение:</strong> {{ q.explanation }}</p>
+        {% endif %}
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="empty-state">
+        <p>Вопросы ещё не добавлены.</p>
+        <a href="{{ url_for('add_question', topic_id=topic.id) }}" class="btn btn-primary">Добавить первый вопрос</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

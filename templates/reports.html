@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Отчёты агентов{% endblock %}
+{% block content %}
+<h1>Отчёты агентов</h1>
+
+{% if reports %}
+<div class="reports-list">
+    {% for report in reports %}
+    <div class="report-card report-{{ report.severity }}">
+        <div class="report-header">
+            <span class="report-agent badge badge-{{ report.severity }}">{{ report.agent_type }}</span>
+            <span class="report-date">{{ report.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+        </div>
+        <p class="report-message">{{ report.message }}</p>
+        {% if report.student %}
+        <a href="{{ url_for('student_detail', student_id=report.student_id) }}" class="btn btn-sm btn-outline">Профиль студента</a>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <p>Отчётов пока нет. Агенты создадут отчёты при обнаружении студентов в зоне риска.</p>
+</div>
+{% endif %}
+{% endblock %}

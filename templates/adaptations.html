@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Адаптация материалов{% endblock %}
+{% block content %}
+<h1>Адаптация материалов</h1>
+<p class="text-muted">Рекомендации, сгенерированные агентом адаптации на основе результатов студентов.</p>
+
+{% if adaptations %}
+<div class="adaptations-list">
+    {% for a in adaptations %}
+    <div class="adaptation-card">
+        <div class="adaptation-header">
+            <span class="adaptation-date">{{ a.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+            {% if a.topic %}
+            <span class="badge badge-info">{{ a.topic.title }}</span>
+            {% endif %}
+        </div>
+        <p>{{ a.recommendation }}</p>
+        {% if a.student %}
+        <small class="text-muted">Студент: {{ a.student.full_name or a.student.username }}</small>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <p>Рекомендаций пока нет. Агент адаптации создаст их после анализа результатов студентов.</p>
+</div>
+{% endif %}
+{% endblock %}

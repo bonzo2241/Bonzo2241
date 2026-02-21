@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Темы курса{% endblock %}
+{% block content %}
+<h1>Доступные темы</h1>
+
+{% if recommendations %}
+<div class="section-card recommendations-card">
+    <h3>Рекомендации от системы</h3>
+    {% for rec in recommendations %}
+    <div class="recommendation-item">
+        <p>{{ rec.recommendation }}</p>
+        <small class="text-muted">{{ rec.created_at.strftime('%d.%m.%Y %H:%M') }}</small>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if topics %}
+<div class="topics-grid">
+    {% for topic in topics %}
+    <div class="topic-card">
+        <div class="topic-header">
+            <h3>{{ topic.title }}</h3>
+            <span class="badge badge-diff-{{ topic.difficulty }}">
+                {% if topic.difficulty == 1 %}Легко{% elif topic.difficulty == 2 %}Средне{% else %}Сложно{% endif %}
+            </span>
+        </div>
+        <p class="topic-desc">{{ topic.description[:150] }}{% if topic.description|length > 150 %}…{% endif %}</p>
+        <div class="topic-meta">
+            <span>Вопросов: {{ topic.questions|length }}</span>
+            {% if topic.id in topic_stats %}
+            <span class="topic-score {% if topic_stats[topic.id].pct >= 70 %}score-good{% elif topic_stats[topic.id].pct >= 50 %}score-ok{% else %}score-bad{% endif %}">
+                Результат: {{ topic_stats[topic.id].pct }}%
+            </span>
+            {% endif %}
+        </div>
+        <div class="topic-actions">
+            <a href="{{ url_for('view_topic', topic_id=topic.id) }}" class="btn btn-outline">Подробнее</a>
+            {% if topic.questions|length > 0 %}
+            <a href="{{ url_for('quiz', topic_id=topic.id) }}" class="btn btn-primary">Пройти тест</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <p>Пока нет доступных тем. Преподаватель скоро добавит материалы.</p>
+</div>
+{% endif %}
+{% endblock %}

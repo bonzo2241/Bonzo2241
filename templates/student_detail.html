@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Студент: {{ student.full_name }}{% endblock %}
+{% block content %}
+<div class="breadcrumb">
+    <a href="{{ url_for('teacher_dashboard') }}">Панель</a> &raquo;
+    {{ student.full_name or student.username }}
+</div>
+
+<h1>{{ student.full_name or student.username }}</h1>
+
+<div class="dashboard-grid">
+    <div class="section-card">
+        <h3>Общая статистика</h3>
+        <div class="overall-stats">
+            <div class="stat-box">
+                <div class="stat-value {% if overall_pct >= 70 %}text-success{% elif overall_pct >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                    {{ overall_pct }}%
+                </div>
+                <div class="stat-label">Общий результат</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value">{{ overall_correct }}</div>
+                <div class="stat-label">Правильных</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value">{{ overall_total }}</div>
+                <div class="stat-label">Всего</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section-card">
+        <h3>Результаты по темам</h3>
+        {% if topic_results %}
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr><th>Тема</th><th>Правильных</th><th>Всего</th><th>%</th></tr>
+                </thead>
+                <tbody>
+                    {% for tid, tr in topic_results.items() %}
+                    <tr>
+                        <td>{{ tr.topic.title if tr.topic else '—' }}</td>
+                        <td>{{ tr.correct }}</td>
+                        <td>{{ tr.total }}</td>
+                        <td>
+                            <span class="badge {% if tr.pct >= 70 %}badge-success{% elif tr.pct >= 50 %}badge-warning{% else %}badge-danger{% endif %}">
+                                {{ tr.pct }}%
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">Студент ещё не проходил тесты.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Agent reports for this student -->
+{% if reports %}
+<div class="section-card">
+    <h3>Отчёты агентов</h3>
+    {% for r in reports[:10] %}
+    <div class="report-item report-{{ r.severity }}">
+        <span class="report-agent">{{ r.agent_type }}</span>
+        <p>{{ r.message }}</p>
+        <small>{{ r.created_at.strftime('%d.%m.%Y %H:%M') }}</small>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Adaptations for this student -->
+{% if adaptations %}
+<div class="section-card">
+    <h3>Рекомендации по адаптации</h3>
+    {% for a in adaptations[:10] %}
+    <div class="adaptation-card">
+        <p>{{ a.recommendation }}</p>
+        <small>{{ a.created_at.strftime('%d.%m.%Y %H:%M') }}</small>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

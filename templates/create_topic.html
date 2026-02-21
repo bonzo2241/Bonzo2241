@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Создать тему{% endblock %}
+{% block content %}
+<div class="breadcrumb">
+    <a href="{{ url_for('teacher_dashboard') }}">Панель</a> &raquo; Создать тему
+</div>
+
+<div class="section-card form-card">
+    <h1>Создать новую тему</h1>
+    <form method="POST">
+        <div class="form-group">
+            <label for="title">Название темы</label>
+            <input type="text" id="title" name="title" required placeholder="Например: Основы баз данных">
+        </div>
+        <div class="form-group">
+            <label for="description">Описание</label>
+            <textarea id="description" name="description" rows="5" placeholder="Опишите тему, укажите ключевые понятия…"></textarea>
+        </div>
+        <div class="form-group">
+            <label for="difficulty">Сложность</label>
+            <select id="difficulty" name="difficulty">
+                <option value="1">Легко</option>
+                <option value="2" selected>Средне</option>
+                <option value="3">Сложно</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Создать тему</button>
+        <a href="{{ url_for('teacher_dashboard') }}" class="btn btn-outline">Отмена</a>
+    </form>
+</div>
+{% endblock %}

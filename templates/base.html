@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}LMS{% endblock %} — Система обучения</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a class="nav-brand" href="{{ url_for('index') }}">LMS Platform</a>
+            {% if session.get('user_id') %}
+            <div class="nav-links">
+                {% if session.get('role') == 'teacher' %}
+                    <a href="{{ url_for('teacher_dashboard') }}">Панель</a>
+                    <a href="{{ url_for('teacher_reports') }}">Отчёты</a>
+                    <a href="{{ url_for('teacher_adaptations') }}">Адаптация</a>
+                {% else %}
+                    <a href="{{ url_for('student_dashboard') }}">Темы</a>
+                    <a href="{{ url_for('student_progress') }}">Мой прогресс</a>
+                {% endif %}
+                <span class="nav-user">{{ session.get('full_name', session.get('username')) }}
+                    ({{ 'Преподаватель' if session.get('role') == 'teacher' else 'Студент' }})</span>
+                <a href="{{ url_for('logout') }}" class="btn btn-sm btn-outline">Выйти</a>
+            </div>
+            {% endif %}
+        </div>
+    </nav>
+
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>LMS Platform &copy; 2026 — Многоагентная система поддержки обучения (SPADE)</p>
+        </div>
+    </footer>
+</body>
+</html>

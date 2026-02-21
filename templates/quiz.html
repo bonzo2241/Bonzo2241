@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Тест: {{ topic.title }}{% endblock %}
+{% block content %}
+<div class="breadcrumb">
+    <a href="{{ url_for('student_dashboard') }}">Темы</a> &raquo;
+    <a href="{{ url_for('view_topic', topic_id=topic.id) }}">{{ topic.title }}</a> &raquo; Тест
+</div>
+
+<div class="section-card">
+    <h1>Тест: {{ topic.title }}</h1>
+    <p class="text-muted">Ответьте на все вопросы и нажмите «Завершить».</p>
+
+    <form method="POST" class="quiz-form">
+        {% for q in questions %}
+        <div class="question-block">
+            <h3 class="question-number">Вопрос {{ loop.index }} из {{ questions|length }}</h3>
+            <p class="question-text">{{ q.text }}</p>
+            <div class="options">
+                <label class="option-label">
+                    <input type="radio" name="q_{{ q.id }}" value="A" required>
+                    <span class="option-text"><strong>A.</strong> {{ q.option_a }}</span>
+                </label>
+                <label class="option-label">
+                    <input type="radio" name="q_{{ q.id }}" value="B">
+                    <span class="option-text"><strong>B.</strong> {{ q.option_b }}</span>
+                </label>
+                <label class="option-label">
+                    <input type="radio" name="q_{{ q.id }}" value="C">
+                    <span class="option-text"><strong>C.</strong> {{ q.option_c }}</span>
+                </label>
+                <label class="option-label">
+                    <input type="radio" name="q_{{ q.id }}" value="D">
+                    <span class="option-text"><strong>D.</strong> {{ q.option_d }}</span>
+                </label>
+            </div>
+        </div>
+        {% endfor %}
+
+        <button type="submit" class="btn btn-primary btn-lg">Завершить тест</button>
+    </form>
+</div>
+{% endblock %}
