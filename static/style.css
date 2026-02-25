@@ -623,7 +623,192 @@ h1 { color: var(--blue-900); margin-bottom: 1.2rem; font-size: 1.6rem; }
 h2 { color: var(--blue-800); margin-bottom: 1rem; font-size: 1.3rem; }
 h3 { color: var(--blue-900); margin-bottom: .75rem; font-size: 1.1rem; }
 
+/* ---- Chat ---- */
+
+.chat-container {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 1.5rem;
+    min-height: 500px;
+}
+
+.chat-sidebar {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1rem;
+    border: 1px solid var(--gray-200);
+}
+
+.chat-topics {
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+    margin-top: .75rem;
+}
+
+.chat-topic-link {
+    padding: .5rem .75rem;
+    border-radius: var(--radius);
+    font-size: .9rem;
+    color: var(--gray-700);
+    transition: background .15s;
+}
+.chat-topic-link:hover { background: var(--blue-50); text-decoration: none; }
+.chat-topic-link.active { background: var(--blue-100); color: var(--blue-900); font-weight: 600; }
+
+.chat-main {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--gray-200);
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-topic-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--gray-200);
+}
+.chat-topic-header h3 { margin-bottom: .25rem; }
+
+.chat-messages {
+    flex: 1;
+    padding: 1.5rem;
+    overflow-y: auto;
+    max-height: 400px;
+}
+
+.chat-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--gray-400);
+}
+
+.chat-message {
+    display: flex;
+    margin-bottom: 1rem;
+}
+
+.chat-message-user { justify-content: flex-end; }
+.chat-message-assistant { justify-content: flex-start; }
+
+.chat-bubble {
+    max-width: 70%;
+    padding: .75rem 1rem;
+    border-radius: var(--radius);
+    font-size: .95rem;
+    line-height: 1.5;
+}
+
+.chat-message-user .chat-bubble {
+    background: var(--blue-600);
+    color: var(--white);
+    border-bottom-right-radius: 2px;
+}
+
+.chat-message-assistant .chat-bubble {
+    background: var(--gray-100);
+    color: var(--gray-800);
+    border-bottom-left-radius: 2px;
+}
+
+.chat-role {
+    font-size: .75rem;
+    font-weight: 600;
+    margin-bottom: .25rem;
+    opacity: .7;
+}
+
+.chat-time {
+    font-size: .7rem;
+    margin-top: .3rem;
+    opacity: .6;
+}
+
+.chat-input-form {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--gray-200);
+}
+
+.chat-input-row {
+    display: flex;
+    gap: .75rem;
+}
+
+.chat-input {
+    flex: 1;
+    padding: .6rem .8rem;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius);
+    font-size: .95rem;
+}
+.chat-input:focus {
+    outline: none;
+    border-color: var(--blue-400);
+    box-shadow: 0 0 0 3px rgba(33,150,243,.15);
+}
+
+/* ---- Actions row ---- */
+
+.actions-row {
+    display: flex;
+    gap: .75rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+}
+
+/* ---- Analysis ---- */
+
+.analysis-summary {
+    padding: 1rem;
+    background: var(--blue-50);
+    border-radius: var(--radius);
+    margin-bottom: 1rem;
+    border-left: 4px solid var(--blue-400);
+}
+
+.analysis-weak {
+    margin-bottom: 1rem;
+}
+.analysis-weak ul {
+    margin-left: 1.5rem;
+    margin-top: .5rem;
+}
+.analysis-weak li {
+    margin-bottom: .3rem;
+    color: var(--danger);
+}
+
+.analysis-difficulty {
+    padding: .75rem 1rem;
+    background: var(--gray-50);
+    border-radius: var(--radius);
+}
+
+/* ---- Form control standalone ---- */
+
+.form-control {
+    padding: .6rem .8rem;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius);
+    font-size: .95rem;
+    background: var(--white);
+}
+.form-control:focus {
+    outline: none;
+    border-color: var(--blue-400);
+    box-shadow: 0 0 0 3px rgba(33,150,243,.15);
+}
+
 /* ---- Responsive ---- */
+
+@media (max-width: 768px) {
+    .chat-container { grid-template-columns: 1fr; }
+    .chat-sidebar { display: none; }
+}
 
 @media (max-width: 600px) {
     .nav-container { flex-direction: column; height: auto; padding: .75rem 0; gap: .5rem; }

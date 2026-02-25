@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Журнал оркестратора{% endblock %}
+{% block content %}
+<h1>Журнал оркестратора</h1>
+<p class="text-muted">Все решения, принятые агентом-оркестратором. Показывает, как координируются действия между агентами.</p>
+
+{% if logs %}
+<div class="section-card">
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Время</th>
+                    <th>Событие</th>
+                    <th>Источник</th>
+                    <th>Цель</th>
+                    <th>Студент</th>
+                    <th>Решение</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>{{ log.created_at.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                    <td><span class="badge badge-info">{{ log.event_type }}</span></td>
+                    <td>{{ log.source_agent }}</td>
+                    <td>{{ log.target_agent or '—' }}</td>
+                    <td>
+                        {% if log.student %}
+                            <a href="{{ url_for('student_detail', student_id=log.student_id) }}">
+                                {{ log.student.full_name or log.student.username if log.student else '—' }}
+                            </a>
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                    <td>{{ log.decision or '—' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="section-card">
+    <div class="empty-state">
+        <p>Журнал пуст. Записи появятся, когда агенты начнут работу.</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

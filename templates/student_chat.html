@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}AI-помощник{% endblock %}
+{% block content %}
+<h1>AI-помощник</h1>
+
+<div class="chat-container">
+    <div class="chat-sidebar">
+        <h3>Выберите тему</h3>
+        <div class="chat-topics">
+            <a href="{{ url_for('student_chat') }}"
+               class="chat-topic-link {% if not current_topic %}active{% endif %}">
+                Общие вопросы
+            </a>
+            {% for topic in topics %}
+            <a href="{{ url_for('student_chat', topic_id=topic.id) }}"
+               class="chat-topic-link {% if current_topic and current_topic.id == topic.id %}active{% endif %}">
+                {{ topic.title }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="chat-main">
+        {% if current_topic %}
+        <div class="chat-topic-header">
+            <h3>{{ current_topic.title }}</h3>
+            <p class="text-muted">{{ current_topic.description[:100] }}{% if current_topic.description|length > 100 %}...{% endif %}</p>
+        </div>
+        {% else %}
+        <div class="chat-topic-header">
+            <h3>Общие вопросы</h3>
+            <p class="text-muted">Задайте любой вопрос по учебным материалам.</p>
+        </div>
+        {% endif %}
+
+        <div class="chat-messages" id="chatMessages">
+            {% if not messages %}
+            <div class="chat-empty">
+                <p>Задайте вопрос, и AI-помощник постарается на него ответить.</p>
+            </div>
+            {% endif %}
+            {% for msg in messages %}
+            <div class="chat-message chat-message-{{ msg.role }}">
+                <div class="chat-bubble">
+                    <div class="chat-role">
+                        {% if msg.role == 'user' %}Вы{% else %}AI-помощник{% endif %}
+                    </div>
+                    <div class="chat-text">{{ msg.content }}</div>
+                    <div class="chat-time">{{ msg.created_at.strftime('%H:%M') }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <form method="POST" action="{{ url_for('student_chat_send') }}" class="chat-input-form">
+            {% if current_topic %}
+            <input type="hidden" name="topic_id" value="{{ current_topic.id }}">
+            {% endif %}
+            <div class="chat-input-row">
+                <input type="text" name="message" placeholder="Введите ваш вопрос..." class="chat-input" autofocus required>
+                <button type="submit" class="btn btn-primary">Отправить</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    var el = document.getElementById('chatMessages');
+    if (el) el.scrollTop = el.scrollHeight;
+</script>
+{% endblock %}

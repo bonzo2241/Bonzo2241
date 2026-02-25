@@ -1,13 +1,18 @@
 """
-SPADE multi-agent system for LMS.
+SPADE multi-agent system for LMS with orchestrator architecture.
 
-Agents:
-  1. MonitoringAgent  – periodically analyses student performance,
-                        detects at-risk students.
-  2. AdaptationAgent  – generates personalised recommendations and
-                        adjusts suggested difficulty.
-  3. NotificationAgent – receives messages from other agents and
-                         persists alerts for teachers.
+Architecture:
+  OrchestratorAgent (central coordinator)
+      |
+      +-- MonitoringAgent   – periodically analyses student performance,
+      |                       sends events to Orchestrator.
+      +-- AdaptationAgent   – generates AI-powered personalised
+      |                       recommendations on Orchestrator's command.
+      +-- NotificationAgent – persists alerts for teachers on
+                              Orchestrator's command.
+
+All inter-agent communication goes through the OrchestratorAgent.
+Agents never communicate directly with each other.
 """
 
 from __future__ import annotations
@@ -21,6 +26,7 @@ from spade.agent import Agent
 from spade.behaviour import CyclicBehaviour, PeriodicBehaviour
 from spade.message import Message
 
+import ai_service
 import config
 
 log = logging.getLogger("lms.agents")
@@ -46,11 +52,159 @@ def _app_context():
 
 
 # ===================================================================
+#  OrchestratorAgent  (central coordinator)
+# ===================================================================
+
+class OrchestratorAgent(Agent):
+    """Central coordinator that receives events from all agents,
+    makes decisions, and dispatches tasks."""
+
+    class DispatchBehaviour(CyclicBehaviour):
+        """Listen for incoming messages and route them."""
+
+        async def run(self):
+            msg = await self.receive(timeout=10)
+            if msg is None:
+                return
+
+            try:
+                data = json.loads(msg.body)
+            except (json.JSONDecodeError, TypeError):
+                log.warning("[Orchestrator] Received unparseable message: %s", msg.body)
+                return
+
+            event_type = data.get("type")
+            log.info(
+                "[Orchestrator] Received event '%s' from %s",
+                event_type, msg.sender,
+            )
+
+            # Log the decision
+            self._log_event(event_type, str(msg.sender), data)
+
+            # --- Routing logic ---
+            if event_type == "student_risk":
+                await self._handle_student_risk(data)
+
+            elif event_type == "recommendations_ready":
+                await self._handle_recommendations_ready(data)
+
+            elif event_type == "adaptation_analysis":
+                await self._handle_adaptation_analysis(data)
+
+            else:
+                log.info("[Orchestrator] Unknown event type '%s', ignoring.", event_type)
+
+        async def _handle_student_risk(self, data: dict):
+            """MonitoringAgent detected an at-risk student.
+            Orchestrator decides: request AI adaptation + send notification."""
+            student_id = data["student_id"]
+            student_name = data.get("student_name", "")
+            score = data.get("score", 0)
+            severity = data.get("severity", "warning")
+
+            self._log_decision(
+                "student_risk", "monitoring", student_id,
+                f"Score={score}%, dispatching to adaptation and notification",
+            )
+
+            # 1) Ask AdaptationAgent to generate AI recommendations
+            adapt_msg = Message(
+                to=config.XMPP_AGENTS["adaptation"]["jid"],
+                body=json.dumps({
+                    "type": "generate_recommendations",
+                    "student_id": student_id,
+                    "student_name": student_name,
+                    "score": score,
+                }),
+            )
+            adapt_msg.set_metadata("performative", "request")
+            await self.send(adapt_msg)
+
+            # 2) Ask NotificationAgent to create an alert
+            notify_msg = Message(
+                to=config.XMPP_AGENTS["notification"]["jid"],
+                body=json.dumps({
+                    "type": "create_alert",
+                    "student_id": student_id,
+                    "student_name": student_name,
+                    "score": score,
+                    "severity": severity,
+                }),
+            )
+            notify_msg.set_metadata("performative", "request")
+            await self.send(notify_msg)
+
+        async def _handle_recommendations_ready(self, data: dict):
+            """AdaptationAgent finished generating recommendations.
+            Orchestrator can trigger further actions if needed."""
+            student_id = data.get("student_id")
+            count = data.get("recommendations_count", 0)
+            ai_used = data.get("ai_used", False)
+
+            self._log_decision(
+                "recommendations_ready", "adaptation", student_id,
+                f"Generated {count} recommendations (AI={'yes' if ai_used else 'no'})",
+            )
+            log.info(
+                "[Orchestrator] %d recommendations ready for student %s (AI=%s)",
+                count, student_id, ai_used,
+            )
+
+        async def _handle_adaptation_analysis(self, data: dict):
+            """AdaptationAgent completed an error-pattern analysis."""
+            student_id = data.get("student_id")
+            suggested_difficulty = data.get("suggested_difficulty", 1)
+
+            self._log_decision(
+                "adaptation_analysis", "adaptation", student_id,
+                f"Suggested difficulty={suggested_difficulty}",
+            )
+
+        def _log_event(self, event_type: str, source: str, data: dict):
+            """Persist an orchestrator log entry."""
+            try:
+                with _app_context():
+                    from models import OrchestratorLog, db
+                    entry = OrchestratorLog(
+                        event_type=event_type or "unknown",
+                        source_agent=source,
+                        student_id=data.get("student_id"),
+                        payload=json.dumps(data, ensure_ascii=False),
+                    )
+                    db.session.add(entry)
+                    db.session.commit()
+            except Exception as exc:
+                log.error("[Orchestrator] Failed to log event: %s", exc)
+
+        def _log_decision(self, event_type: str, target: str, student_id, decision: str):
+            try:
+                with _app_context():
+                    from models import OrchestratorLog, db
+                    entry = OrchestratorLog(
+                        event_type=event_type,
+                        source_agent="orchestrator",
+                        target_agent=target,
+                        student_id=student_id,
+                        decision=decision,
+                    )
+                    db.session.add(entry)
+                    db.session.commit()
+            except Exception as exc:
+                log.error("[Orchestrator] Failed to log decision: %s", exc)
+
+    async def setup(self):
+        log.info("[OrchestratorAgent] Starting …")
+        self.add_behaviour(self.DispatchBehaviour())
+
+
+# ===================================================================
 #  MonitoringAgent
 # ===================================================================
 
 class MonitoringAgent(Agent):
-    """Periodically scans student results and flags at-risk students."""
+    """Periodically scans student results and sends risk events
+    to the OrchestratorAgent."""
 
     class MonitorBehaviour(PeriodicBehaviour):
         async def run(self):
@@ -77,7 +231,7 @@ class MonitoringAgent(Agent):
                         recent_score = round(recent_correct / len(recent) * 100, 1)
 
                     if score < config.RISK_SCORE_THRESHOLD:
-                        # Check if we already reported in last hour
+                        # Avoid duplicate reports within the last hour
                         last_report = (
                             AgentReport.query
                             .filter_by(agent_type="monitoring", student_id=student.id)
@@ -103,31 +257,20 @@ class MonitoringAgent(Agent):
                         )
                         db.session.add(report)
 
-                        # Notify the NotificationAgent via XMPP
-                        xmpp_msg = Message(
-                            to=config.XMPP_AGENTS["notification"]["jid"],
+                        # Send event to OrchestratorAgent (NOT directly to other agents)
+                        orchestrator_msg = Message(
+                            to=config.XMPP_AGENTS["orchestrator"]["jid"],
                             body=json.dumps({
-                                "type": "risk_alert",
+                                "type": "student_risk",
                                 "student_id": student.id,
                                 "student_name": student.full_name or student.username,
                                 "score": score,
+                                "recent_score": recent_score,
                                 "severity": severity,
                             }),
                         )
-                        xmpp_msg.set_metadata("performative", "inform")
-                        await self.send(xmpp_msg)
-
-                        # Also ask the adaptation agent to create recommendations
-                        adapt_msg = Message(
-                            to=config.XMPP_AGENTS["adaptation"]["jid"],
-                            body=json.dumps({
-                                "type": "adapt_request",
-                                "student_id": student.id,
-                                "score": score,
-                            }),
-                        )
-                        adapt_msg.set_metadata("performative", "request")
-                        await self.send(adapt_msg)
+                        orchestrator_msg.set_metadata("performative", "inform")
+                        await self.send(orchestrator_msg)
 
                 db.session.commit()
             log.info("[MonitoringAgent] Monitoring cycle complete.")
@@ -139,11 +282,12 @@ class MonitoringAgent(Agent):
 
 
 # ===================================================================
-#  AdaptationAgent
+#  AdaptationAgent  (AI-powered)
 # ===================================================================
 
 class AdaptationAgent(Agent):
-    """Receives adapt_request messages and generates recommendations."""
+    """Generates AI-powered personalised recommendations.
+    Listens for commands from the OrchestratorAgent."""
 
     class ListenBehaviour(CyclicBehaviour):
         async def run(self):
@@ -156,21 +300,28 @@ class AdaptationAgent(Agent):
             except (json.JSONDecodeError, TypeError):
                 return
 
-            if data.get("type") != "adapt_request":
-                return
+            if data.get("type") == "generate_recommendations":
+                await self._generate_recommendations(data)
+            elif data.get("type") == "analyze_errors":
+                await self._analyze_errors(data)
 
+        async def _generate_recommendations(self, data: dict):
             student_id = data["student_id"]
-            score = data["score"]
+            student_name = data.get("student_name", "")
+            score = data.get("score", 0)
 
             log.info(
-                "[AdaptationAgent] Generating recommendations for student %s (score=%s)",
+                "[AdaptationAgent] Generating AI recommendations for student %s (score=%s%%)",
                 student_id, score,
             )
+
+            recommendations_count = 0
+            ai_used = config.AI_ENABLED
 
             with _app_context():
                 from models import AdaptationLog, StudentAnswer, Topic, db
 
-                # Find weak topics
+                # Find per-topic stats
                 answers = StudentAnswer.query.filter_by(student_id=student_id).all()
                 topic_stats: dict[int, dict] = {}
                 for a in answers:
@@ -184,40 +335,101 @@ class AdaptationAgent(Agent):
                     if pct < config.RISK_SCORE_THRESHOLD:
                         topic = Topic.query.get(tid)
                         if topic:
-                            weak_topics.append((topic, round(pct, 1)))
+                            weak_topics.append((topic, round(pct, 1), st["total"], st["correct"]))
 
                 if weak_topics:
-                    for topic, pct in weak_topics:
-                        rec_text = (
-                            f"Рекомендуется повторить тему «{topic.title}» "
-                            f"(текущий результат: {pct}%). "
+                    for topic, pct, total, correct in weak_topics:
+                        # Use AI to generate personalised recommendation
+                        rec_text = ai_service.generate_recommendation(
+                            student_name=student_name,
+                            topic_title=topic.title,
+                            score_pct=pct,
+                            total_answers=total,
+                            correct_answers=correct,
                         )
-                        if pct < 30:
-                            rec_text += "Рекомендуется начать с более простых материалов."
-                        elif pct < 50:
-                            rec_text += "Попробуйте пройти тему ещё раз, обращая внимание на пояснения."
-
                         adaptation = AdaptationLog(
                             student_id=student_id,
                             topic_id=topic.id,
                             recommendation=rec_text,
+                            ai_generated=ai_used,
                         )
                         db.session.add(adaptation)
+                        recommendations_count += 1
                 else:
                     if score < config.RISK_SCORE_THRESHOLD:
                         adaptation = AdaptationLog(
                             student_id=student_id,
-                            recommendation=(
-                                "Общий балл ниже порога. "
-                                "Рекомендуется пройти все доступные темы повторно."
+                            recommendation=ai_service.generate_recommendation(
+                                student_name=student_name,
+                                topic_title="общая программа",
+                                score_pct=score,
+                                total_answers=len(answers),
+                                correct_answers=sum(1 for a in answers if a.is_correct),
                             ),
+                            ai_generated=ai_used,
                         )
                         db.session.add(adaptation)
+                        recommendations_count += 1
 
                 db.session.commit()
 
+            # Notify orchestrator that recommendations are ready
+            reply = Message(
+                to=config.XMPP_AGENTS["orchestrator"]["jid"],
+                body=json.dumps({
+                    "type": "recommendations_ready",
+                    "student_id": student_id,
+                    "recommendations_count": recommendations_count,
+                    "ai_used": ai_used,
+                }),
+            )
+            reply.set_metadata("performative", "inform")
+            await self.send(reply)
+
+        async def _analyze_errors(self, data: dict):
+            """Run AI error-pattern analysis for a student."""
+            student_id = data["student_id"]
+            student_name = data.get("student_name", "")
+
+            log.info("[AdaptationAgent] Analysing error patterns for student %s", student_id)
+
+            with _app_context():
+                from models import StudentAnswer, Topic
+
+                answers = StudentAnswer.query.filter_by(student_id=student_id).all()
+                topic_stats: dict[int, dict] = {}
+                for a in answers:
+                    t = topic_stats.setdefault(a.topic_id, {"total": 0, "correct": 0})
+                    t["total"] += 1
+                    t["correct"] += int(a.is_correct)
+
+                topic_results = []
+                for tid, st in topic_stats.items():
+                    topic = Topic.query.get(tid)
+                    pct = st["correct"] / st["total"] * 100 if st["total"] else 0
+                    topic_results.append({
+                        "topic_title": topic.title if topic else f"Topic {tid}",
+                        "total": st["total"],
+                        "correct": st["correct"],
+                        "pct": round(pct, 1),
+                    })
+
+            analysis = ai_service.analyze_error_patterns(student_name, topic_results)
+
+            # Send analysis to orchestrator
+            reply = Message(
+                to=config.XMPP_AGENTS["orchestrator"]["jid"],
+                body=json.dumps({
+                    "type": "adaptation_analysis",
+                    "student_id": student_id,
+                    **analysis,
+                }),
+            )
+            reply.set_metadata("performative", "inform")
+            await self.send(reply)
+
     class PeriodicAdaptBehaviour(PeriodicBehaviour):
-        """Proactively scan all students and generate recommendations."""
+        """Proactively scan all students and send risk events to orchestrator."""
 
         async def run(self):
             log.info("[AdaptationAgent] Running periodic adaptation scan …")
@@ -255,15 +467,18 @@ class AdaptationAgent(Agent):
                         if not topic:
                             continue
 
-                        rec = (
-                            f"Студенту «{student.full_name or student.username}» "
-                            f"рекомендуется повторить тему «{topic.title}» "
-                            f"(результат: {round(pct, 1)}%)."
+                        rec = ai_service.generate_recommendation(
+                            student_name=student.full_name or student.username,
+                            topic_title=topic.title,
+                            score_pct=round(pct, 1),
+                            total_answers=st["total"],
+                            correct_answers=st["correct"],
                         )
                         db.session.add(AdaptationLog(
                             student_id=student.id,
                             topic_id=topic.id,
                             recommendation=rec,
+                            ai_generated=config.AI_ENABLED,
                         ))
 
                 db.session.commit()
@@ -280,7 +495,8 @@ class AdaptationAgent(Agent):
 # ===================================================================
 
 class NotificationAgent(Agent):
-    """Listens for alert messages and persists them as teacher-visible reports."""
+    """Listens for alert commands from OrchestratorAgent and persists
+    them as teacher-visible reports."""
 
     class ListenBehaviour(CyclicBehaviour):
         async def run(self):
@@ -293,11 +509,11 @@ class NotificationAgent(Agent):
             except (json.JSONDecodeError, TypeError):
                 return
 
-            if data.get("type") != "risk_alert":
+            if data.get("type") != "create_alert":
                 return
 
             log.info(
-                "[NotificationAgent] Received risk alert for student %s",
+                "[NotificationAgent] Creating alert for student %s",
                 data.get("student_name"),
             )
 
@@ -308,7 +524,7 @@ class NotificationAgent(Agent):
                     agent_type="notification",
                     student_id=data.get("student_id"),
                     message=(
-                        f"⚠ Уведомление: студент «{data.get('student_name')}» "
+                        f"Уведомление: студент «{data.get('student_name')}» "
                         f"находится в зоне риска (балл: {data.get('score')}%)."
                     ),
                     severity=data.get("severity", "warning"),
@@ -329,9 +545,13 @@ _agents: list[Agent] = []
 
 
 async def start_agents():
-    """Instantiate and start all three SPADE agents."""
+    """Instantiate and start all SPADE agents (orchestrator first)."""
     global _agents
 
+    orchestrator = OrchestratorAgent(
+        config.XMPP_AGENTS["orchestrator"]["jid"],
+        config.XMPP_AGENTS["orchestrator"]["password"],
+    )
     monitoring = MonitoringAgent(
         config.XMPP_AGENTS["monitoring"]["jid"],
         config.XMPP_AGENTS["monitoring"]["password"],
@@ -345,7 +565,8 @@ async def start_agents():
         config.XMPP_AGENTS["notification"]["password"],
     )
 
-    _agents = [monitoring, adaptation, notification]
+    # Start orchestrator first so it is ready to receive messages
+    _agents = [orchestrator, monitoring, adaptation, notification]
 
     for agent in _agents:
         await agent.start(auto_register=True)

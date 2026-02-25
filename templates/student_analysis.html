@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}AI-анализ — {{ student.full_name or student.username }}{% endblock %}
+{% block content %}
+<div class="breadcrumb">
+    <a href="{{ url_for('teacher_dashboard') }}">Панель</a> &raquo;
+    <a href="{{ url_for('student_detail', student_id=student.id) }}">{{ student.full_name or student.username }}</a> &raquo;
+    AI-анализ
+</div>
+
+<div class="section-card">
+    <h1>AI-анализ ошибок</h1>
+    <p>Студент: <strong>{{ student.full_name or student.username }}</strong></p>
+</div>
+
+{% if topic_results %}
+<div class="section-card">
+    <h3>Результаты по темам</h3>
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Тема</th>
+                    <th>Ответов</th>
+                    <th>Правильных</th>
+                    <th>Результат</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in topic_results %}
+                <tr>
+                    <td>{{ t.topic_title }}</td>
+                    <td>{{ t.total }}</td>
+                    <td>{{ t.correct }}</td>
+                    <td>
+                        <span class="badge {% if t.pct >= 70 %}badge-success{% elif t.pct >= 50 %}badge-warning{% else %}badge-danger{% endif %}">
+                            {{ t.pct }}%
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="section-card">
+    <h3>AI-анализ</h3>
+    <div class="analysis-summary">
+        <p><strong>Резюме:</strong> {{ analysis.summary }}</p>
+    </div>
+
+    {% if analysis.weak_areas %}
+    <div class="analysis-weak">
+        <h4>Слабые области:</h4>
+        <ul>
+            {% for area in analysis.weak_areas %}
+            <li>{{ area }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <div class="analysis-difficulty">
+        <p><strong>Рекомендуемый уровень сложности:</strong>
+            {% if analysis.suggested_difficulty == 1 %}
+                <span class="badge badge-diff-1">Простой</span>
+            {% elif analysis.suggested_difficulty == 2 %}
+                <span class="badge badge-diff-2">Средний</span>
+            {% else %}
+                <span class="badge badge-diff-3">Сложный</span>
+            {% endif %}
+        </p>
+    </div>
+</div>
+{% else %}
+<div class="section-card">
+    <div class="empty-state">
+        <p>У студента пока нет результатов для анализа.</p>
+    </div>
+</div>
+{% endif %}
+
+<a href="{{ url_for('student_detail', student_id=student.id) }}" class="btn btn-outline">Назад</a>
+{% endblock %}
