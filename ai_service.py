@@ -32,7 +32,14 @@ def _get_client():
     global _client
     if _client is None:
         from openai import OpenAI
-        _client = OpenAI(api_key=config.AI_API_KEY, base_url=config.AI_BASE_URL)
+        _client = OpenAI(
+            api_key=config.AI_API_KEY,
+            base_url=config.AI_BASE_URL,
+            default_headers={
+                "HTTP-Referer": "http://localhost:5000",  # требуется OpenRouter
+                "X-Title": "LMS Platform",
+            },
+        )
     return _client
 
 

@@ -33,8 +33,9 @@ RISK_SCORE_THRESHOLD = 50          # % below which a student is "at risk"
 MONITORING_PERIOD = 30             # seconds between monitoring cycles
 ADAPTATION_PERIOD = 60             # seconds between adaptation cycles
 
-# AI / LLM settings (OpenAI-compatible API)
+# AI / LLM settings (OpenRouter — OpenAI-compatible API)
+# Получить ключ: https://openrouter.ai/keys
 AI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
-AI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
-AI_MODEL = os.environ.get("AI_MODEL", "gpt-3.5-turbo")
+AI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "https://openrouter.ai/api/v1")
+AI_MODEL = os.environ.get("AI_MODEL", "google/gemma-2-9b-it:free")
 AI_ENABLED = bool(AI_API_KEY)
