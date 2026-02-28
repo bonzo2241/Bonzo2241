@@ -71,6 +71,7 @@ def main():
     )
     flask_thread.start()
     log.info("Flask web server started on port %d.", args.port)
+    log.info("Open http://localhost:%d in your browser.", args.port)
 
     # Start SPADE agents in the asyncio event loop
     loop = asyncio.new_event_loop()
