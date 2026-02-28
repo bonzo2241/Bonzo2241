@@ -35,7 +35,7 @@
 
         <div class="chat-messages" id="chatMessages">
             {% if not messages %}
-            <div class="chat-empty">
+            <div class="chat-empty" id="chatEmpty">
                 <p>Задайте вопрос, и AI-помощник постарается на него ответить.</p>
             </div>
             {% endif %}
@@ -52,20 +52,112 @@
             {% endfor %}
         </div>
 
-        <form method="POST" action="{{ url_for('student_chat_send') }}" class="chat-input-form">
-            {% if current_topic %}
-            <input type="hidden" name="topic_id" value="{{ current_topic.id }}">
-            {% endif %}
+        <form id="chatForm" class="chat-input-form">
             <div class="chat-input-row">
-                <input type="text" name="message" placeholder="Введите ваш вопрос..." class="chat-input" autofocus required>
-                <button type="submit" class="btn btn-primary">Отправить</button>
+                <input type="text" id="chatInput" placeholder="Введите ваш вопрос..." class="chat-input" autofocus required>
+                <button type="submit" class="btn btn-primary" id="chatSendBtn">Отправить</button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
-    var el = document.getElementById('chatMessages');
-    if (el) el.scrollTop = el.scrollHeight;
+(function() {
+    var chatMessages = document.getElementById('chatMessages');
+    var chatForm = document.getElementById('chatForm');
+    var chatInput = document.getElementById('chatInput');
+    var chatSendBtn = document.getElementById('chatSendBtn');
+    var chatEmpty = document.getElementById('chatEmpty');
+    var topicId = {{ current_topic.id if current_topic else 'null' }};
+
+    function scrollToBottom() {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    scrollToBottom();
+
+    function addMessage(role, text, time) {
+        if (chatEmpty) {
+            chatEmpty.remove();
+            chatEmpty = null;
+        }
+        var wrapper = document.createElement('div');
+        wrapper.className = 'chat-message chat-message-' + role;
+        var bubble = document.createElement('div');
+        bubble.className = 'chat-bubble';
+        bubble.innerHTML =
+            '<div class="chat-role">' + (role === 'user' ? 'Вы' : 'AI-помощник') + '</div>' +
+            '<div class="chat-text">' + escapeHtml(text) + '</div>' +
+            '<div class="chat-time">' + time + '</div>';
+        wrapper.appendChild(bubble);
+        chatMessages.appendChild(wrapper);
+        scrollToBottom();
+    }
+
+    function addTypingIndicator() {
+        var wrapper = document.createElement('div');
+        wrapper.className = 'chat-message chat-message-assistant';
+        wrapper.id = 'typingIndicator';
+        var bubble = document.createElement('div');
+        bubble.className = 'chat-bubble';
+        bubble.innerHTML =
+            '<div class="chat-role">AI-помощник</div>' +
+            '<div class="chat-text chat-typing"><span></span><span></span><span></span></div>';
+        wrapper.appendChild(bubble);
+        chatMessages.appendChild(wrapper);
+        scrollToBottom();
+    }
+
+    function removeTypingIndicator() {
+        var el = document.getElementById('typingIndicator');
+        if (el) el.remove();
+    }
+
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function now() {
+        var d = new Date();
+        return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+    }
+
+    chatForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var message = chatInput.value.trim();
+        if (!message) return;
+
+        addMessage('user', message, now());
+        chatInput.value = '';
+        chatSendBtn.disabled = true;
+        chatSendBtn.textContent = 'Думаю...';
+        addTypingIndicator();
+
+        fetch('{{ url_for("student_chat_send") }}', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({topic_id: topicId, message: message})
+        })
+        .then(function(resp) { return resp.json(); })
+        .then(function(data) {
+            removeTypingIndicator();
+            if (data.error) {
+                addMessage('assistant', 'Ошибка: ' + data.error, now());
+            } else {
+                addMessage('assistant', data.answer, data.time || now());
+            }
+        })
+        .catch(function(err) {
+            removeTypingIndicator();
+            addMessage('assistant', 'Ошибка соединения. Попробуйте ещё раз.', now());
+        })
+        .finally(function() {
+            chatSendBtn.disabled = false;
+            chatSendBtn.textContent = 'Отправить';
+            chatInput.focus();
+        });
+    });
+})();
 </script>
 {% endblock %}

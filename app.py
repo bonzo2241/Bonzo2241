@@ -10,6 +10,7 @@ from datetime import datetime
 from flask import (
     Flask,
     flash,
+    jsonify,
     redirect,
     render_template,
     request,
@@ -70,34 +71,297 @@ def _seed_demo_data():
 
     db.session.flush()
 
-    topic = Topic(
+    # ------------------------------------------------------------------
+    #  Topic 1: Основы Python
+    # ------------------------------------------------------------------
+    topic1 = Topic(
         title="Основы Python",
         description="Базовые конструкции языка Python: переменные, типы данных, условия, циклы.",
         difficulty=1,
         created_by=teacher.id,
     )
-    db.session.add(topic)
+    db.session.add(topic1)
     db.session.flush()
 
-    questions = [
+    db.session.add_all([
         Question(
-            topic_id=topic.id, text="Какой тип данных возвращает функция input()?",
+            topic_id=topic1.id, text="Какой тип данных возвращает функция input()?",
             option_a="int", option_b="str", option_c="float", option_d="bool",
             correct_answer="B", explanation="Функция input() всегда возвращает строку (str).",
         ),
         Question(
-            topic_id=topic.id, text="Как объявить список в Python?",
+            topic_id=topic1.id, text="Как объявить список в Python?",
             option_a="list = (1,2,3)", option_b="list = {1,2,3}",
             option_c="list = [1,2,3]", option_d="list = <1,2,3>",
             correct_answer="C", explanation="Списки объявляются с помощью квадратных скобок [].",
         ),
         Question(
-            topic_id=topic.id, text="Какой оператор используется для целочисленного деления?",
+            topic_id=topic1.id, text="Какой оператор используется для целочисленного деления?",
             option_a="/", option_b="//", option_c="%", option_d="**",
             correct_answer="B", explanation="Оператор // выполняет целочисленное деление.",
         ),
-    ]
-    db.session.add_all(questions)
+        Question(
+            topic_id=topic1.id, text="Что выведет print(type(3.14))?",
+            option_a="<class 'int'>", option_b="<class 'str'>",
+            option_c="<class 'float'>", option_d="<class 'double'>",
+            correct_answer="C", explanation="Число 3.14 — вещественное, его тип float.",
+        ),
+        Question(
+            topic_id=topic1.id, text="Как правильно написать условие в Python?",
+            option_a="if x == 5:", option_b="if (x == 5) then",
+            option_c="if x = 5:", option_d="if x == 5 then:",
+            correct_answer="A", explanation="В Python условие записывается как if выражение: (с двоеточием).",
+        ),
+    ])
+
+    # ------------------------------------------------------------------
+    #  Topic 2: Функции и модули Python
+    # ------------------------------------------------------------------
+    topic2 = Topic(
+        title="Функции и модули Python",
+        description="Определение функций, аргументы, возвращаемые значения, импорт модулей.",
+        difficulty=2,
+        created_by=teacher.id,
+    )
+    db.session.add(topic2)
+    db.session.flush()
+
+    db.session.add_all([
+        Question(
+            topic_id=topic2.id, text="Какое ключевое слово используется для определения функции?",
+            option_a="function", option_b="def", option_c="func", option_d="define",
+            correct_answer="B", explanation="В Python функции определяются с помощью ключевого слова def.",
+        ),
+        Question(
+            topic_id=topic2.id, text="Что вернёт функция, если в ней нет оператора return?",
+            option_a="0", option_b="Пустую строку", option_c="None", option_d="Ошибку",
+            correct_answer="C", explanation="Функция без return возвращает None.",
+        ),
+        Question(
+            topic_id=topic2.id, text="Как импортировать только функцию sqrt из модуля math?",
+            option_a="import sqrt from math", option_b="from math import sqrt",
+            option_c="import math.sqrt", option_d="using math import sqrt",
+            correct_answer="B", explanation="Синтаксис: from модуль import имя.",
+        ),
+        Question(
+            topic_id=topic2.id, text="Что такое *args в определении функции?",
+            option_a="Обязательные аргументы", option_b="Именованные аргументы",
+            option_c="Произвольное количество позиционных аргументов", option_d="Аргументы по умолчанию",
+            correct_answer="C", explanation="*args позволяет передать произвольное количество позиционных аргументов.",
+        ),
+        Question(
+            topic_id=topic2.id, text="Какая функция возвращает длину списка?",
+            option_a="size()", option_b="count()", option_c="length()", option_d="len()",
+            correct_answer="D", explanation="Встроенная функция len() возвращает длину последовательности.",
+        ),
+    ])
+
+    # ------------------------------------------------------------------
+    #  Topic 3: ООП в Python
+    # ------------------------------------------------------------------
+    topic3 = Topic(
+        title="ООП в Python",
+        description="Классы, объекты, наследование, инкапсуляция, полиморфизм.",
+        difficulty=2,
+        created_by=teacher.id,
+    )
+    db.session.add(topic3)
+    db.session.flush()
+
+    db.session.add_all([
+        Question(
+            topic_id=topic3.id, text="Какой метод вызывается при создании объекта класса?",
+            option_a="__start__", option_b="__create__", option_c="__init__", option_d="__new__",
+            correct_answer="C", explanation="Метод __init__ — конструктор, вызывается при создании экземпляра.",
+        ),
+        Question(
+            topic_id=topic3.id, text="Что означает параметр self в методах класса?",
+            option_a="Ссылка на класс", option_b="Ссылка на текущий экземпляр объекта",
+            option_c="Ключевое слово Python", option_d="Имя переменной",
+            correct_answer="B", explanation="self — ссылка на текущий экземпляр объекта.",
+        ),
+        Question(
+            topic_id=topic3.id, text="Как обозначается наследование в Python?",
+            option_a="class Dog extends Animal:", option_b="class Dog(Animal):",
+            option_c="class Dog inherits Animal:", option_d="class Dog <- Animal:",
+            correct_answer="B", explanation="Наследование указывается в скобках: class Потомок(Родитель).",
+        ),
+        Question(
+            topic_id=topic3.id, text="Что такое инкапсуляция?",
+            option_a="Множественное наследование", option_b="Сокрытие внутренней реализации",
+            option_c="Перегрузка операторов", option_d="Создание интерфейсов",
+            correct_answer="B", explanation="Инкапсуляция — сокрытие деталей реализации от внешнего кода.",
+        ),
+        Question(
+            topic_id=topic3.id, text="Какой декоратор делает метод статическим?",
+            option_a="@classmethod", option_b="@static", option_c="@staticmethod", option_d="@method",
+            correct_answer="C", explanation="Декоратор @staticmethod делает метод статическим.",
+        ),
+    ])
+
+    # ------------------------------------------------------------------
+    #  Topic 4: Базы данных и SQL
+    # ------------------------------------------------------------------
+    topic4 = Topic(
+        title="Базы данных и SQL",
+        description="Основы реляционных баз данных, SQL-запросы: SELECT, INSERT, UPDATE, DELETE, JOIN.",
+        difficulty=2,
+        created_by=teacher.id,
+    )
+    db.session.add(topic4)
+    db.session.flush()
+
+    db.session.add_all([
+        Question(
+            topic_id=topic4.id, text="Какой оператор SQL используется для выборки данных?",
+            option_a="GET", option_b="FETCH", option_c="SELECT", option_d="EXTRACT",
+            correct_answer="C", explanation="Оператор SELECT используется для выборки данных из таблицы.",
+        ),
+        Question(
+            topic_id=topic4.id, text="Какой тип JOIN возвращает только совпадающие записи?",
+            option_a="LEFT JOIN", option_b="RIGHT JOIN", option_c="FULL JOIN", option_d="INNER JOIN",
+            correct_answer="D", explanation="INNER JOIN возвращает только те строки, которые есть в обеих таблицах.",
+        ),
+        Question(
+            topic_id=topic4.id, text="Какой оператор используется для фильтрации групп в SQL?",
+            option_a="WHERE", option_b="HAVING", option_c="FILTER", option_d="GROUP BY",
+            correct_answer="B", explanation="HAVING фильтрует результаты после группировки (GROUP BY).",
+        ),
+        Question(
+            topic_id=topic4.id, text="Что такое первичный ключ (PRIMARY KEY)?",
+            option_a="Любой столбец таблицы", option_b="Уникальный идентификатор записи",
+            option_c="Внешняя ссылка на другую таблицу", option_d="Индекс для ускорения запросов",
+            correct_answer="B", explanation="PRIMARY KEY — уникальный идентификатор каждой записи в таблице.",
+        ),
+        Question(
+            topic_id=topic4.id, text="Какой командой добавляется новая запись в таблицу?",
+            option_a="ADD INTO", option_b="INSERT INTO", option_c="PUT INTO", option_d="CREATE ROW",
+            correct_answer="B", explanation="INSERT INTO используется для добавления новых записей.",
+        ),
+    ])
+
+    # ------------------------------------------------------------------
+    #  Topic 5: Веб-разработка (HTML/CSS)
+    # ------------------------------------------------------------------
+    topic5 = Topic(
+        title="Веб-разработка: HTML и CSS",
+        description="Структура HTML-документа, основные теги, CSS-селекторы, flexbox, позиционирование.",
+        difficulty=1,
+        created_by=teacher.id,
+    )
+    db.session.add(topic5)
+    db.session.flush()
+
+    db.session.add_all([
+        Question(
+            topic_id=topic5.id, text="Какой тег является корневым элементом HTML-документа?",
+            option_a="<body>", option_b="<head>", option_c="<html>", option_d="<doctype>",
+            correct_answer="C", explanation="Тег <html> — корневой элемент HTML-документа.",
+        ),
+        Question(
+            topic_id=topic5.id, text="Какое CSS-свойство меняет цвет текста?",
+            option_a="text-color", option_b="font-color", option_c="color", option_d="text-style",
+            correct_answer="C", explanation="Свойство color задаёт цвет текста.",
+        ),
+        Question(
+            topic_id=topic5.id, text="Что делает display: flex?",
+            option_a="Скрывает элемент", option_b="Делает элемент блочным",
+            option_c="Включает flex-контейнер", option_d="Фиксирует элемент на странице",
+            correct_answer="C", explanation="display: flex превращает элемент в flex-контейнер для гибкой разметки.",
+        ),
+        Question(
+            topic_id=topic5.id, text="Какой тег используется для создания ссылки?",
+            option_a="<link>", option_b="<a>", option_c="<href>", option_d="<url>",
+            correct_answer="B", explanation="Тег <a> (anchor) создаёт гиперссылку.",
+        ),
+        Question(
+            topic_id=topic5.id, text="Какой CSS-селектор выбирает элемент по id?",
+            option_a=".myid", option_b="#myid", option_c="*myid", option_d="@myid",
+            correct_answer="B", explanation="Селектор #id выбирает элемент с указанным идентификатором.",
+        ),
+    ])
+
+    # ------------------------------------------------------------------
+    #  Topic 6: Компьютерные сети
+    # ------------------------------------------------------------------
+    topic6 = Topic(
+        title="Компьютерные сети",
+        description="Модель OSI, протоколы TCP/IP, HTTP, DNS, маршрутизация и адресация.",
+        difficulty=3,
+        created_by=teacher.id,
+    )
+    db.session.add(topic6)
+    db.session.flush()
+
+    db.session.add_all([
+        Question(
+            topic_id=topic6.id, text="Сколько уровней в модели OSI?",
+            option_a="4", option_b="5", option_c="6", option_d="7",
+            correct_answer="D", explanation="Модель OSI состоит из 7 уровней.",
+        ),
+        Question(
+            topic_id=topic6.id, text="Какой протокол используется для разрешения доменных имён?",
+            option_a="HTTP", option_b="FTP", option_c="DNS", option_d="SMTP",
+            correct_answer="C", explanation="DNS (Domain Name System) преобразует доменные имена в IP-адреса.",
+        ),
+        Question(
+            topic_id=topic6.id, text="На каком уровне OSI работает протокол TCP?",
+            option_a="Сетевой", option_b="Транспортный", option_c="Канальный", option_d="Прикладной",
+            correct_answer="B", explanation="TCP работает на транспортном (4-м) уровне модели OSI.",
+        ),
+        Question(
+            topic_id=topic6.id, text="Какой HTTP-метод используется для получения данных?",
+            option_a="POST", option_b="PUT", option_c="GET", option_d="PATCH",
+            correct_answer="C", explanation="Метод GET запрашивает данные с сервера.",
+        ),
+        Question(
+            topic_id=topic6.id, text="Какой порт по умолчанию использует HTTPS?",
+            option_a="80", option_b="8080", option_c="443", option_d="22",
+            correct_answer="C", explanation="HTTPS использует порт 443 по умолчанию.",
+        ),
+    ])
+
+    # ------------------------------------------------------------------
+    #  Topic 7: Алгоритмы и структуры данных
+    # ------------------------------------------------------------------
+    topic7 = Topic(
+        title="Алгоритмы и структуры данных",
+        description="Сложность алгоритмов, сортировки, поиск, стеки, очереди, деревья, графы.",
+        difficulty=3,
+        created_by=teacher.id,
+    )
+    db.session.add(topic7)
+    db.session.flush()
+
+    db.session.add_all([
+        Question(
+            topic_id=topic7.id, text="Какова сложность бинарного поиска?",
+            option_a="O(n)", option_b="O(n²)", option_c="O(log n)", option_d="O(1)",
+            correct_answer="C", explanation="Бинарный поиск делит массив пополам, сложность O(log n).",
+        ),
+        Question(
+            topic_id=topic7.id, text="Какая структура данных работает по принципу LIFO?",
+            option_a="Очередь", option_b="Стек", option_c="Список", option_d="Дерево",
+            correct_answer="B", explanation="Стек (stack) работает по принципу Last In, First Out.",
+        ),
+        Question(
+            topic_id=topic7.id, text="Какова средняя сложность быстрой сортировки (Quick Sort)?",
+            option_a="O(n)", option_b="O(n log n)", option_c="O(n²)", option_d="O(log n)",
+            correct_answer="B", explanation="Средняя сложность Quick Sort — O(n log n).",
+        ),
+        Question(
+            topic_id=topic7.id, text="Что такое хеш-таблица?",
+            option_a="Отсортированный массив", option_b="Двусвязный список",
+            option_c="Структура с доступом по ключу за O(1)", option_d="Бинарное дерево поиска",
+            correct_answer="C", explanation="Хеш-таблица обеспечивает доступ к данным по ключу в среднем за O(1).",
+        ),
+        Question(
+            topic_id=topic7.id, text="Какой алгоритм находит кратчайший путь в графе?",
+            option_a="Bubble Sort", option_b="DFS", option_c="Алгоритм Дейкстры", option_d="Merge Sort",
+            correct_answer="C", explanation="Алгоритм Дейкстры находит кратчайший путь от одной вершины до всех остальных.",
+        ),
+    ])
+
     db.session.commit()
 
 
@@ -471,10 +735,18 @@ def _register_routes(app: Flask):
     @app.route("/student/chat/send", methods=["POST"])
     @login_required
     def student_chat_send():
-        topic_id = request.form.get("topic_id", type=int)
-        question_text = request.form.get("message", "").strip()
+        is_ajax = request.is_json
+        if is_ajax:
+            data = request.get_json()
+            topic_id = data.get("topic_id")
+            question_text = (data.get("message") or "").strip()
+        else:
+            topic_id = request.form.get("topic_id", type=int)
+            question_text = request.form.get("message", "").strip()
 
         if not question_text:
+            if is_ajax:
+                return jsonify({"error": "Введите вопрос."}), 400
             flash("Введите вопрос.", "warning")
             return redirect(url_for("student_chat", topic_id=topic_id))
 
@@ -515,6 +787,11 @@ def _register_routes(app: Flask):
         )
         db.session.add(assistant_msg)
         db.session.commit()
+
+        if is_ajax:
+            from datetime import datetime as dt
+            now = dt.now().strftime("%H:%M")
+            return jsonify({"answer": answer, "time": now})
 
         return redirect(url_for("student_chat", topic_id=topic_id))
 
