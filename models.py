@@ -91,7 +91,39 @@ class AdaptationLog(db.Model):
     student_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     topic_id = db.Column(db.Integer, db.ForeignKey("topics.id"), nullable=True)
     recommendation = db.Column(db.Text, nullable=False)
+    ai_generated = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     student = db.relationship("User", backref="adaptations")
     topic = db.relationship("Topic", backref="adaptations")
+
+
+class OrchestratorLog(db.Model):
+    """Log of decisions made by the orchestrator agent."""
+    __tablename__ = "orchestrator_logs"
+
+    id = db.Column(db.Integer, primary_key=True)
+    event_type = db.Column(db.String(50), nullable=False)
+    source_agent = db.Column(db.String(50), nullable=False)
+    target_agent = db.Column(db.String(50), nullable=True)
+    student_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+    payload = db.Column(db.Text, nullable=True)
+    decision = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    student = db.relationship("User", backref="orchestrator_logs")
+
+
+class ChatMessage(db.Model):
+    """Messages in the AI chat assistant."""
+    __tablename__ = "chat_messages"
+
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    topic_id = db.Column(db.Integer, db.ForeignKey("topics.id"), nullable=True)
+    role = db.Column(db.String(20), nullable=False)  # user | assistant
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    student = db.relationship("User", backref="chat_messages")
+    topic = db.relationship("Topic", backref="chat_messages")

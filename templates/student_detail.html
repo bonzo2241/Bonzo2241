@@ -6,7 +6,10 @@
     {{ student.full_name or student.username }}
 </div>
 
-<h1>{{ student.full_name or student.username }}</h1>
+<div class="section-header">
+    <h1>{{ student.full_name or student.username }}</h1>
+    <a href="{{ url_for('student_analysis', student_id=student.id) }}" class="btn btn-outline">AI-анализ ошибок</a>
+</div>
 
 <div class="dashboard-grid">
     <div class="section-card">

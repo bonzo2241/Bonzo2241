@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}AI-генерация вопросов — {{ topic.title }}{% endblock %}
+{% block content %}
+<div class="breadcrumb">
+    <a href="{{ url_for('teacher_dashboard') }}">Панель</a> &raquo;
+    <a href="{{ url_for('manage_topic', topic_id=topic.id) }}">{{ topic.title }}</a> &raquo;
+    AI-генерация
+</div>
+
+<div class="section-card">
+    <h1>AI-генерация вопросов</h1>
+    <p>Тема: <strong>{{ topic.title }}</strong></p>
+    <p class="text-muted">{{ topic.description }}</p>
+</div>
+
+{% if generated is none %}
+<!-- Step 1: Choose how many questions to generate -->
+<div class="section-card">
+    <h3>Параметры генерации</h3>
+    <form method="POST">
+        <div class="form-group">
+            <label for="count">Количество вопросов:</label>
+            <select name="count" id="count" class="form-control">
+                <option value="3" selected>3</option>
+                <option value="5">5</option>
+                <option value="7">7</option>
+                <option value="10">10</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Сгенерировать</button>
+        <a href="{{ url_for('manage_topic', topic_id=topic.id) }}" class="btn btn-outline">Отмена</a>
+    </form>
+</div>
+{% else %}
+<!-- Step 2: Preview and save generated questions -->
+<div class="section-card">
+    <h3>Сгенерированные вопросы ({{ generated|length }})</h3>
+
+    {% for q in generated %}
+    <div class="question-manage-card">
+        <h4>Вопрос {{ loop.index }}</h4>
+        <p class="question-text">{{ q.text }}</p>
+        <div class="options-preview">
+            <span class="{% if q.correct_answer == 'A' %}option-correct{% endif %}">A: {{ q.option_a }}</span>
+            <span class="{% if q.correct_answer == 'B' %}option-correct{% endif %}">B: {{ q.option_b }}</span>
+            <span class="{% if q.correct_answer == 'C' %}option-correct{% endif %}">C: {{ q.option_c }}</span>
+            <span class="{% if q.correct_answer == 'D' %}option-correct{% endif %}">D: {{ q.option_d }}</span>
+        </div>
+        {% if q.explanation %}
+        <p class="explanation"><strong>Пояснение:</strong> {{ q.explanation }}</p>
+        {% endif %}
+    </div>
+    {% endfor %}
+
+    <div class="actions-row">
+        <form method="POST" style="display: inline;">
+            <input type="hidden" name="count" value="{{ count }}">
+            <input type="hidden" name="save" value="1">
+            <button type="submit" class="btn btn-primary">Сохранить все вопросы</button>
+        </form>
+        <form method="POST" style="display: inline;">
+            <input type="hidden" name="count" value="{{ count }}">
+            <button type="submit" class="btn btn-outline">Перегенерировать</button>
+        </form>
+        <a href="{{ url_for('manage_topic', topic_id=topic.id) }}" class="btn btn-outline">Отмена</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

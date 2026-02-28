@@ -21,12 +21,15 @@ import config
 from models import (
     AdaptationLog,
     AgentReport,
+    ChatMessage,
+    OrchestratorLog,
     Question,
     StudentAnswer,
     Topic,
     User,
     db,
 )
+import ai_service
 
 
 def create_app() -> Flask:
@@ -435,3 +438,175 @@ def _register_routes(app: Flask):
             overall_correct=overall_correct,
             overall_pct=overall_pct,
         )
+
+    # -- AI: Chat assistant for students --------------------------------
+
+    @app.route("/student/chat", methods=["GET"])
+    @login_required
+    def student_chat():
+        topics = Topic.query.order_by(Topic.title).all()
+        topic_id = request.args.get("topic_id", type=int)
+        topic = Topic.query.get(topic_id) if topic_id else None
+
+        messages = []
+        if topic_id:
+            messages = (
+                ChatMessage.query
+                .filter_by(student_id=session["user_id"], topic_id=topic_id)
+                .order_by(ChatMessage.created_at)
+                .all()
+            )
+
+        return render_template(
+            "student_chat.html",
+            topics=topics,
+            current_topic=topic,
+            messages=messages,
+        )
+
+    @app.route("/student/chat/send", methods=["POST"])
+    @login_required
+    def student_chat_send():
+        topic_id = request.form.get("topic_id", type=int)
+        question_text = request.form.get("message", "").strip()
+
+        if not question_text:
+            flash("Введите вопрос.", "warning")
+            return redirect(url_for("student_chat", topic_id=topic_id))
+
+        topic = Topic.query.get(topic_id) if topic_id else None
+        topic_title = topic.title if topic else None
+
+        # Save user message
+        user_msg = ChatMessage(
+            student_id=session["user_id"],
+            topic_id=topic_id,
+            role="user",
+            content=question_text,
+        )
+        db.session.add(user_msg)
+
+        # Get conversation history for context
+        history = (
+            ChatMessage.query
+            .filter_by(student_id=session["user_id"], topic_id=topic_id)
+            .order_by(ChatMessage.created_at)
+            .all()
+        )
+        conversation = [{"role": m.role, "content": m.content} for m in history]
+
+        # Get AI answer
+        answer = ai_service.chat_answer(
+            student_question=question_text,
+            topic_title=topic_title,
+            conversation_history=conversation,
+        )
+
+        # Save assistant message
+        assistant_msg = ChatMessage(
+            student_id=session["user_id"],
+            topic_id=topic_id,
+            role="assistant",
+            content=answer,
+        )
+        db.session.add(assistant_msg)
+        db.session.commit()
+
+        return redirect(url_for("student_chat", topic_id=topic_id))
+
+    # -- AI: Question generation for teachers ---------------------------
+
+    @app.route("/teacher/topic/<int:topic_id>/generate", methods=["GET", "POST"])
+    @teacher_required
+    def generate_questions(topic_id: int):
+        topic = Topic.query.get_or_404(topic_id)
+
+        if request.method == "POST":
+            count = int(request.form.get("count", 3))
+            count = max(1, min(count, 10))
+
+            generated = ai_service.generate_questions(
+                topic_title=topic.title,
+                topic_description=topic.description,
+                count=count,
+                difficulty=topic.difficulty,
+            )
+
+            if request.form.get("save") == "1":
+                saved = 0
+                for q_data in generated:
+                    if q_data["text"] and q_data["option_a"]:
+                        q = Question(
+                            topic_id=topic_id,
+                            text=q_data["text"],
+                            option_a=q_data["option_a"],
+                            option_b=q_data["option_b"],
+                            option_c=q_data["option_c"],
+                            option_d=q_data["option_d"],
+                            correct_answer=q_data["correct_answer"],
+                            explanation=q_data.get("explanation", ""),
+                        )
+                        db.session.add(q)
+                        saved += 1
+                db.session.commit()
+                flash(f"Сохранено {saved} вопросов.", "success")
+                return redirect(url_for("manage_topic", topic_id=topic_id))
+
+            return render_template(
+                "generate_questions.html",
+                topic=topic,
+                generated=generated,
+                count=count,
+            )
+
+        return render_template("generate_questions.html", topic=topic, generated=None, count=3)
+
+    # -- AI: Error pattern analysis for teachers ------------------------
+
+    @app.route("/teacher/student/<int:student_id>/analysis")
+    @teacher_required
+    def student_analysis(student_id: int):
+        student = User.query.get_or_404(student_id)
+        answers = StudentAnswer.query.filter_by(student_id=student_id).all()
+
+        topic_stats: dict[int, dict] = {}
+        for a in answers:
+            t = topic_stats.setdefault(a.topic_id, {"total": 0, "correct": 0})
+            t["total"] += 1
+            t["correct"] += int(a.is_correct)
+
+        topic_results = []
+        for tid, st in topic_stats.items():
+            topic = Topic.query.get(tid)
+            pct = st["correct"] / st["total"] * 100 if st["total"] else 0
+            topic_results.append({
+                "topic_title": topic.title if topic else f"Тема {tid}",
+                "total": st["total"],
+                "correct": st["correct"],
+                "pct": round(pct, 1),
+            })
+
+        analysis = ai_service.analyze_error_patterns(
+            student_name=student.full_name or student.username,
+            topic_results=topic_results,
+        )
+
+        return render_template(
+            "student_analysis.html",
+            student=student,
+            topic_results=topic_results,
+            analysis=analysis,
+        )
+
+    # -- Orchestrator log for teachers ----------------------------------
+
+    @app.route("/teacher/orchestrator")
+    @teacher_required
+    def orchestrator_log():
+        logs = (
+            OrchestratorLog.query
+            .order_by(OrchestratorLog.created_at.desc())
+            .limit(50)
+            .all()
+        )
+        return render_template("orchestrator_log.html", logs=logs)

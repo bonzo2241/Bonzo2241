@@ -18,7 +18,10 @@
 <div class="section-card">
     <div class="section-header">
         <h2>Вопросы ({{ questions|length }})</h2>
-        <a href="{{ url_for('add_question', topic_id=topic.id) }}" class="btn btn-primary">Добавить вопрос</a>
+        <div>
+            <a href="{{ url_for('add_question', topic_id=topic.id) }}" class="btn btn-primary">Добавить вопрос</a>
+            <a href="{{ url_for('generate_questions', topic_id=topic.id) }}" class="btn btn-outline">AI-генерация</a>
+        </div>
     </div>
 
     {% if questions %}

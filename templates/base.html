@@ -16,9 +16,11 @@
                     <a href="{{ url_for('teacher_dashboard') }}">Панель</a>
                     <a href="{{ url_for('teacher_reports') }}">Отчёты</a>
                     <a href="{{ url_for('teacher_adaptations') }}">Адаптация</a>
+                    <a href="{{ url_for('orchestrator_log') }}">Оркестратор</a>
                 {% else %}
                     <a href="{{ url_for('student_dashboard') }}">Темы</a>
                     <a href="{{ url_for('student_progress') }}">Мой прогресс</a>
+                    <a href="{{ url_for('student_chat') }}">AI-помощник</a>
                 {% endif %}
                 <span class="nav-user">{{ session.get('full_name', session.get('username')) }}
                     ({{ 'Преподаватель' if session.get('role') == 'teacher' else 'Студент' }})</span>
