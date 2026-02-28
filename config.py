@@ -35,7 +35,11 @@ ADAPTATION_PERIOD = 60             # seconds between adaptation cycles
 
 # AI / LLM settings (OpenRouter — OpenAI-compatible API)
 # Получить ключ: https://openrouter.ai/keys
-AI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
-AI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "https://openrouter.ai/api/v1")
-AI_MODEL = os.environ.get("AI_MODEL", "nvidia/nemotron-3-nano-30b-a3b:free")
+AI_API_KEY = "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"
+AI_BASE_URL = "https://openrouter.ai/api/v1"
+AI_MODEL = "nvidia/nemotron-3-nano-30b-a3b:free"
 AI_ENABLED = bool(AI_API_KEY)
+
+# Server settings
+SERVER_HOST = "192.168.0.14"
+SERVER_PORT = 5000
