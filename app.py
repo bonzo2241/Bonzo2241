@@ -37,6 +37,10 @@ def create_app() -> Flask:
     app.config["SECRET_KEY"] = config.SECRET_KEY
     app.config["SQLALCHEMY_DATABASE_URI"] = config.DATABASE_URI
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+        "connect_args": {"timeout": 30, "check_same_thread": False},
+        "pool_pre_ping": True,
+    }
 
     db.init_app(app)
 
