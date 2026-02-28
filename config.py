@@ -37,5 +37,5 @@ ADAPTATION_PERIOD = 60             # seconds between adaptation cycles
 # Получить ключ: https://openrouter.ai/keys
 AI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 AI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "https://openrouter.ai/api/v1")
-AI_MODEL = os.environ.get("AI_MODEL", "google/gemma-2-9b-it:free")
+AI_MODEL = os.environ.get("AI_MODEL", "google/gemma-3-4b-it:free")
 AI_ENABLED = bool(AI_API_KEY)
