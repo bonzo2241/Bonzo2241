@@ -34,7 +34,7 @@ log = logging.getLogger("lms")
 
 def run_flask(app, port: int):
     """Run the Flask dev server in a separate thread."""
-    app.run(host="192.168.0.14", port=port, debug=False, use_reloader=False)
+    app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
 
 
 def main():
@@ -56,8 +56,8 @@ def main():
 
     if args.web_only:
         log.info("Starting LMS in web-only mode (no agents).")
-        log.info("Open http://192.168.0.14:%d in your browser.", args.port)
-        app.run(host="192.168.0.14", port=args.port, debug=True)
+        log.info("Open http://127.0.0.1:%d in your browser.", args.port)
+        app.run(host="0.0.0.0", port=args.port, debug=True)
         return
 
     # --- Full mode: web + SPADE agents ---
