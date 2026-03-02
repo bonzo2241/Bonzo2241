@@ -5,7 +5,9 @@ Flask web application for the LMS.
 from __future__ import annotations
 
 import functools
-from datetime import datetime
+import json
+import random
+from datetime import datetime, timedelta
 
 from flask import (
     Flask,
@@ -52,48 +54,352 @@ def create_app() -> Flask:
 #  Demo data
 # -------------------------------------------------------------------
 
-def _seed_demo_data():
+def _seed_demo_data():  # noqa: C901
     if User.query.first() is not None:
         return
 
+    random.seed(42)
+    now = datetime.utcnow()
+
+    # ── Teachers ──────────────────────────────────────────────────
     teacher = User(username="teacher", role="teacher", full_name="Иванов И.И.")
     teacher.set_password("teacher")
     db.session.add(teacher)
 
-    student = User(username="student", role="student", full_name="Петров П.П.")
-    student.set_password("student")
-    db.session.add(student)
+    teacher2 = User(username="teacher2", role="teacher", full_name="Смирнова Е.А.")
+    teacher2.set_password("teacher2")
+    db.session.add(teacher2)
 
     db.session.flush()
 
-    topic = Topic(
-        title="Основы Python",
-        description="Базовые конструкции языка Python: переменные, типы данных, условия, циклы.",
-        difficulty=1,
-        created_by=teacher.id,
-    )
-    db.session.add(topic)
-    db.session.flush()
-
-    questions = [
-        Question(
-            topic_id=topic.id, text="Какой тип данных возвращает функция input()?",
-            option_a="int", option_b="str", option_c="float", option_d="bool",
-            correct_answer="B", explanation="Функция input() всегда возвращает строку (str).",
-        ),
-        Question(
-            topic_id=topic.id, text="Как объявить список в Python?",
-            option_a="list = (1,2,3)", option_b="list = {1,2,3}",
-            option_c="list = [1,2,3]", option_d="list = <1,2,3>",
-            correct_answer="C", explanation="Списки объявляются с помощью квадратных скобок [].",
-        ),
-        Question(
-            topic_id=topic.id, text="Какой оператор используется для целочисленного деления?",
-            option_a="/", option_b="//", option_c="%", option_d="**",
-            correct_answer="B", explanation="Оператор // выполняет целочисленное деление.",
-        ),
+    # ── Topics & Questions ────────────────────────────────────────
+    topics_data = [
+        {
+            "title": "Основы Python",
+            "description": "Базовые конструкции языка Python: переменные, типы данных, условия, циклы.",
+            "difficulty": 1,
+            "created_by": teacher.id,
+            "questions": [
+                ("Какой тип данных возвращает функция input()?",
+                 "int", "str", "float", "bool", "B",
+                 "Функция input() всегда возвращает строку (str)."),
+                ("Как объявить список в Python?",
+                 "list = (1,2,3)", "list = {1,2,3}", "list = [1,2,3]", "list = <1,2,3>", "C",
+                 "Списки объявляются с помощью квадратных скобок []."),
+                ("Какой оператор используется для целочисленного деления?",
+                 "/", "//", "%", "**", "B",
+                 "Оператор // выполняет целочисленное деление."),
+                ("Что выведет print(type(3.14))?",
+                 "<class 'int'>", "<class 'float'>", "<class 'str'>", "<class 'double'>", "B",
+                 "Число 3.14 — вещественное, его тип float."),
+                ("Какое ключевое слово используется для определения функции?",
+                 "func", "function", "def", "lambda", "C",
+                 "Ключевое слово def используется для определения функций в Python."),
+            ],
+        },
+        {
+            "title": "Структуры данных",
+            "description": "Списки, кортежи, словари, множества и их методы.",
+            "difficulty": 2,
+            "created_by": teacher.id,
+            "questions": [
+                ("Какой метод добавляет элемент в конец списка?",
+                 "insert()", "append()", "extend()", "push()", "B",
+                 "Метод append() добавляет один элемент в конец списка."),
+                ("Какая структура данных неизменяема?",
+                 "list", "dict", "set", "tuple", "D",
+                 "Кортеж (tuple) — неизменяемая структура данных."),
+                ("Как получить все ключи словаря d?",
+                 "d.keys()", "d.values()", "d.items()", "d.all()", "A",
+                 "Метод keys() возвращает представление всех ключей словаря."),
+                ("Что вернёт len({1, 2, 2, 3})?",
+                 "4", "3", "2", "Ошибку", "B",
+                 "Множество содержит только уникальные элементы: {1, 2, 3}, длина 3."),
+                ("Как объединить два списка a и b?",
+                 "a.merge(b)", "a + b", "a.join(b)", "a & b", "B",
+                 "Оператор + объединяет два списка в новый."),
+            ],
+        },
+        {
+            "title": "ООП в Python",
+            "description": "Классы, объекты, наследование, инкапсуляция, полиморфизм.",
+            "difficulty": 2,
+            "created_by": teacher.id,
+            "questions": [
+                ("Как создать класс в Python?",
+                 "class MyClass:", "new MyClass:", "create MyClass:", "define MyClass:", "A",
+                 "Класс определяется ключевым словом class."),
+                ("Что такое self в методе класса?",
+                 "Имя класса", "Ссылка на текущий экземпляр", "Глобальная переменная", "Декоратор", "B",
+                 "self — ссылка на текущий экземпляр объекта."),
+                ("Какой метод вызывается при создании экземпляра?",
+                 "__str__", "__init__", "__new__", "__call__", "B",
+                 "__init__ — конструктор, вызывается при создании объекта."),
+                ("Как обозначается наследование?",
+                 "class Child -> Parent:", "class Child(Parent):", "class Child extends Parent:", "class Child: Parent", "B",
+                 "В Python наследование указывается в скобках после имени класса."),
+                ("Что делает декоратор @staticmethod?",
+                 "Делает метод приватным", "Убирает параметр self", "Делает метод абстрактным", "Добавляет логирование", "B",
+                 "Статический метод не получает self и не привязан к экземпляру."),
+            ],
+        },
+        {
+            "title": "Алгоритмы и сложность",
+            "description": "Основные алгоритмы сортировки, поиска и оценка вычислительной сложности.",
+            "difficulty": 3,
+            "created_by": teacher2.id,
+            "questions": [
+                ("Какова сложность бинарного поиска?",
+                 "O(n)", "O(n²)", "O(log n)", "O(1)", "C",
+                 "Бинарный поиск делит массив пополам на каждом шаге → O(log n)."),
+                ("Какой алгоритм сортировки имеет лучшую среднюю сложность?",
+                 "Пузырьковая O(n²)", "Быстрая O(n log n)", "Вставками O(n²)", "Выбором O(n²)", "B",
+                 "Быстрая сортировка в среднем работает за O(n log n)."),
+                ("Что такое рекурсия?",
+                 "Цикл while", "Вызов функцией самой себя", "Обработка исключений", "Чтение файла", "B",
+                 "Рекурсия — приём, при котором функция вызывает саму себя."),
+                ("Какова сложность доступа к элементу в хеш-таблице?",
+                 "O(n)", "O(log n)", "O(1)", "O(n²)", "C",
+                 "В среднем случае доступ к элементу хеш-таблицы — O(1)."),
+                ("Что такое жадный алгоритм?",
+                 "Перебирает все варианты", "На каждом шаге выбирает локально лучший вариант",
+                 "Использует только рекурсию", "Работает только с графами", "B",
+                 "Жадный алгоритм делает локально оптимальный выбор на каждом шаге."),
+            ],
+        },
     ]
-    db.session.add_all(questions)
+
+    topic_objects = []
+    question_objects = []  # flat list of all questions
+    topic_questions = {}   # topic_index -> [question_objects]
+
+    for i, td in enumerate(topics_data):
+        t = Topic(
+            title=td["title"],
+            description=td["description"],
+            difficulty=td["difficulty"],
+            created_by=td["created_by"],
+        )
+        db.session.add(t)
+        db.session.flush()
+        topic_objects.append(t)
+        topic_questions[i] = []
+        for qd in td["questions"]:
+            q = Question(
+                topic_id=t.id, text=qd[0],
+                option_a=qd[1], option_b=qd[2], option_c=qd[3], option_d=qd[4],
+                correct_answer=qd[5], explanation=qd[6],
+            )
+            db.session.add(q)
+            question_objects.append(q)
+            topic_questions[i].append(q)
+
+    db.session.flush()
+
+    # ── Students ──────────────────────────────────────────────────
+    # Each student has: name, username, password,
+    #   accuracy per topic [t0, t1, t2, t3], attempts per topic
+    students_spec = [
+        ("Петров П.П.",   "student",   "student",   [0.90, 0.85, 0.80, 0.70], [5, 5, 5, 5]),
+        ("Сидорова А.В.", "sidorova",  "sidorova",  [1.00, 0.95, 0.90, 0.85], [5, 5, 5, 5]),
+        ("Козлов Д.М.",   "kozlov",    "kozlov",    [0.80, 0.70, 0.65, 0.55], [5, 5, 5, 5]),
+        ("Волкова Е.С.",  "volkova",   "volkova",   [0.65, 0.55, 0.50, 0.40], [5, 5, 5, 5]),
+        ("Морозов И.К.",  "morozov",   "morozov",   [0.40, 0.30, 0.25, 0.15], [5, 5, 5, 5]),
+        ("Новикова О.Л.", "novikova",  "novikova",  [0.95, 0.90, 0.45, 0.30], [5, 5, 5, 5]),
+        ("Фёдоров А.А.",  "fedorov",   "fedorov",   [0.60, 0.50, 0.00, 0.00], [3, 2, 0, 0]),
+        ("Егорова М.В.",  "egorova",   "egorova",   [0.50, 0.70, 0.75, 0.85], [5, 5, 5, 5]),
+        ("Павлов С.Н.",   "pavlov",    "pavlov",    [0.85, 0.70, 0.50, 0.30], [5, 5, 5, 5]),
+        ("Антонова К.Р.", "antonova",  "antonova",  [0.80, 0.00, 0.00, 0.00], [5, 0, 0, 0]),
+        ("Белов Р.Д.",    "belov",     "belov",     [0.20, 0.15, 0.10, 0.10], [5, 5, 5, 5]),
+    ]
+
+    student_objects = []
+    for full_name, username, password, _acc, _att in students_spec:
+        s = User(username=username, role="student", full_name=full_name)
+        s.set_password(password)
+        db.session.add(s)
+        student_objects.append(s)
+
+    db.session.flush()
+
+    # ── Student Answers ───────────────────────────────────────────
+    def _gen_answers(student, accuracies, attempts_per_topic):
+        """Generate StudentAnswer rows for a student across all topics."""
+        options = ["A", "B", "C", "D"]
+        for ti, topic in enumerate(topic_objects):
+            n_attempts = attempts_per_topic[ti]
+            if n_attempts == 0:
+                continue
+            acc = accuracies[ti]
+            qs = topic_questions[ti]
+            for attempt_round in range(n_attempts):
+                q = qs[attempt_round % len(qs)]
+                is_correct = random.random() < acc
+                if is_correct:
+                    answer = q.correct_answer
+                else:
+                    wrong = [o for o in options if o != q.correct_answer]
+                    answer = random.choice(wrong)
+                sa = StudentAnswer(
+                    student_id=student.id,
+                    question_id=q.id,
+                    topic_id=topic.id,
+                    answer=answer,
+                    is_correct=is_correct,
+                    created_at=now - timedelta(days=random.randint(0, 14),
+                                               hours=random.randint(0, 23)),
+                )
+                db.session.add(sa)
+
+    for idx, s in enumerate(student_objects):
+        _gen_answers(s, students_spec[idx][3], students_spec[idx][4])
+
+    db.session.flush()
+
+    # ── Agent Reports (monitoring & notification) ─────────────────
+    at_risk = [
+        (student_objects[4], "Морозов И.К.", 27.5),   # morozov
+        (student_objects[10], "Белов Р.Д.", 13.8),     # belov
+        (student_objects[3], "Волкова Е.С.", 47.5),    # volkova — borderline
+        (student_objects[8], "Павлов С.Н.", 30.0),     # pavlov — declining
+    ]
+    for student, name, score in at_risk:
+        severity = "danger" if score < 30 else "warning"
+        report = AgentReport(
+            agent_type="monitoring",
+            student_id=student.id,
+            message=f"Студент {name} показывает низкую успеваемость: {score}%. Требуется внимание преподавателя.",
+            severity=severity,
+            is_read=False,
+            created_at=now - timedelta(hours=random.randint(1, 48)),
+        )
+        db.session.add(report)
+        # Notification from orchestrator
+        notif = AgentReport(
+            agent_type="notification",
+            student_id=student.id,
+            message=f"[Оркестратор → Уведомление] Обнаружен риск для {name}. "
+                    f"Текущий балл: {score}%. Рекомендовано адаптивное вмешательство.",
+            severity=severity,
+            is_read=False,
+            created_at=now - timedelta(hours=random.randint(0, 24)),
+        )
+        db.session.add(notif)
+
+    # Good performance report
+    db.session.add(AgentReport(
+        agent_type="monitoring",
+        student_id=student_objects[1].id,
+        message="Студент Сидорова А.В. демонстрирует отличные результаты: 92.5%. Рекомендовано повышение сложности.",
+        severity="info",
+        is_read=False,
+        created_at=now - timedelta(hours=6),
+    ))
+
+    # Progress alert for Egorova
+    db.session.add(AgentReport(
+        agent_type="monitoring",
+        student_id=student_objects[7].id,
+        message="Студент Егорова М.В. показывает положительную динамику: успеваемость выросла с 50% до 85%.",
+        severity="info",
+        is_read=False,
+        created_at=now - timedelta(hours=3),
+    ))
+
+    # ── Adaptation Logs ───────────────────────────────────────────
+    adaptations_data = [
+        (student_objects[4], topic_objects[0],
+         "Рекомендуется вернуться к базовым понятиям Python. "
+         "Начните с повторения типов данных и операторов. "
+         "Решайте простые задачи на ввод-вывод перед переходом к сложным темам."),
+        (student_objects[4], topic_objects[3],
+         "Тема алгоритмов пока слишком сложна. Рекомендуется сначала закрепить основы "
+         "и структуры данных, прежде чем переходить к оценке сложности."),
+        (student_objects[10], topic_objects[0],
+         "Критически низкий результат по основам. Рекомендуется индивидуальная консультация "
+         "с преподавателем и проработка материала с нуля."),
+        (student_objects[10], topic_objects[2],
+         "ООП: результаты 10%. Необходимо разобрать концепцию классов на простых примерах. "
+         "Рекомендованы интерактивные упражнения с пошаговым разбором."),
+        (student_objects[3], topic_objects[3],
+         "Алгоритмы: 40%. Рекомендуется визуализация алгоритмов сортировки "
+         "и пошаговое прохождение через примеры на бумаге."),
+        (student_objects[5], topic_objects[2],
+         "ООП: резкое снижение (45%) при хороших результатах по другим темам. "
+         "Возможно, пробел в понимании наследования. Рекомендуется разбор практических примеров."),
+        (student_objects[8], topic_objects[3],
+         "Наблюдается отрицательная динамика: с 85% до 30%. "
+         "Рекомендуется проверить понимание базовых концепций сложности "
+         "и предложить дополнительные материалы по O-нотации."),
+        (student_objects[7], None,
+         "Положительная динамика! Студент улучшает результаты от темы к теме. "
+         "Рекомендуется поддержать мотивацию и предложить задачи повышенной сложности."),
+    ]
+    for student, topic, rec in adaptations_data:
+        al = AdaptationLog(
+            student_id=student.id,
+            topic_id=topic.id if topic else None,
+            recommendation=rec,
+            ai_generated=True,
+            created_at=now - timedelta(hours=random.randint(0, 36)),
+        )
+        db.session.add(al)
+
+    # ── Orchestrator Logs ─────────────────────────────────────────
+    orch_events = [
+        ("student_risk", "MonitoringAgent", "AdaptationAgent",
+         student_objects[4],
+         {"student": "Морозов И.К.", "score": 27.5},
+         "Обнаружен риск. Направлено задание AdaptationAgent на генерацию рекомендаций."),
+        ("student_risk", "MonitoringAgent", "NotificationAgent",
+         student_objects[4],
+         {"student": "Морозов И.К.", "score": 27.5},
+         "Создано уведомление для преподавателя о студенте в зоне риска."),
+        ("student_risk", "MonitoringAgent", "AdaptationAgent",
+         student_objects[10],
+         {"student": "Белов Р.Д.", "score": 13.8},
+         "Критически низкий балл. Срочная генерация адаптивных рекомендаций."),
+        ("student_risk", "MonitoringAgent", "NotificationAgent",
+         student_objects[10],
+         {"student": "Белов Р.Д.", "score": 13.8},
+         "Создано срочное уведомление: студент в критической зоне."),
+        ("generate_recommendations", "AdaptationAgent", None,
+         student_objects[4],
+         {"topics_below_threshold": ["Основы Python", "Структуры данных", "ООП в Python", "Алгоритмы"]},
+         "Сгенерированы персональные рекомендации по 4 темам."),
+        ("generate_recommendations", "AdaptationAgent", None,
+         student_objects[5],
+         {"topics_below_threshold": ["ООП в Python", "Алгоритмы"]},
+         "Сильный студент с пробелами. Сгенерированы точечные рекомендации."),
+        ("positive_trend", "MonitoringAgent", "AdaptationAgent",
+         student_objects[7],
+         {"student": "Егорова М.В.", "trend": "improving", "from": 50, "to": 85},
+         "Положительная динамика. Рекомендовано повышение сложности материала."),
+        ("student_risk", "MonitoringAgent", "AdaptationAgent",
+         student_objects[8],
+         {"student": "Павлов С.Н.", "score": 30.0, "trend": "declining"},
+         "Обнаружена отрицательная динамика. Направлен запрос на адаптацию."),
+        ("periodic_scan", "MonitoringAgent", None,
+         None,
+         {"total_students": 11, "at_risk": 4, "excellent": 2},
+         "Периодический скан завершён. 4 студента в зоне риска, 2 с отличными результатами."),
+        ("system_start", "OrchestratorAgent", None,
+         None,
+         {"agents": ["MonitoringAgent", "AdaptationAgent", "NotificationAgent"]},
+         "Система агентов запущена. Все агенты активны и готовы к работе."),
+    ]
+    for evt_type, source, target, student, payload, decision in orch_events:
+        ol = OrchestratorLog(
+            event_type=evt_type,
+            source_agent=source,
+            target_agent=target or "",
+            student_id=student.id if student else None,
+            payload=json.dumps(payload, ensure_ascii=False),
+            decision=decision,
+            created_at=now - timedelta(hours=random.randint(0, 48)),
+        )
+        db.session.add(ol)
+
     db.session.commit()
 
 
