@@ -39,11 +39,16 @@ def create_app() -> Flask:
     app.config["SECRET_KEY"] = config.SECRET_KEY
     app.config["SQLALCHEMY_DATABASE_URI"] = config.DATABASE_URI
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = config.SQLALCHEMY_ENGINE_OPTIONS
 
     db.init_app(app)
 
     with app.app_context():
         db.create_all()
+        # Enable WAL mode for better concurrent access (Flask + SPADE agents).
+        with db.engine.connect() as conn:
+            conn.execute(db.text("PRAGMA journal_mode=WAL"))
+            conn.commit()
         _seed_demo_data()
 
     _register_routes(app)
