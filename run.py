@@ -61,7 +61,7 @@ def main():
         return
 
     # --- Full mode: web + SPADE agents ---
-    from agents import set_flask_app, start_agents, stop_agents
+    from agents import set_flask_app, start_agents, stop_agents, watch_agents
 
     set_flask_app(app)
 
@@ -90,9 +90,15 @@ def main():
         log.info("Starting SPADE agents …")
         loop.run_until_complete(start_agents())
         log.info("All agents are running. Press Ctrl+C to stop.")
+        asyncio.ensure_future(watch_agents(), loop=loop)
         loop.run_forever()
     except KeyboardInterrupt:
         shutdown()
+    except Exception as exc:
+        log.error("SPADE agents failed: %s", exc)
+        log.info("Web server continues running without agents on port %d.", args.port)
+        log.info("Restart with --web-only to suppress this, or fix the XMPP server.")
+        flask_thread.join()
 
 
 if __name__ == "__main__":

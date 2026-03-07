@@ -568,9 +568,44 @@ async def start_agents():
     # Start orchestrator first so it is ready to receive messages
     _agents = [orchestrator, monitoring, adaptation, notification]
 
+    max_retries = 5
     for agent in _agents:
-        await agent.start(auto_register=True)
-        log.info("Agent %s started.", agent.jid)
+        for attempt in range(1, max_retries + 1):
+            try:
+                await agent.start(auto_register=True)
+                log.info("Agent %s started.", agent.jid)
+                break
+            except Exception as exc:
+                if attempt == max_retries:
+                    log.error("Agent %s failed after %d attempts: %s", agent.jid, max_retries, exc)
+                    raise
+                wait = 2 ** attempt
+                log.warning("Agent %s connect attempt %d/%d failed: %s. Retrying in %ds…",
+                            agent.jid, attempt, max_retries, exc, wait)
+                await asyncio.sleep(wait)
+
+
+async def watch_agents(check_interval: int = 30):
+    """Periodically check agent liveness and restart any that have died."""
+    while True:
+        await asyncio.sleep(check_interval)
+        for i, agent in enumerate(_agents):
+            if not agent.is_alive():
+                log.warning("Agent %s is dead, restarting…", agent.jid)
+                try:
+                    # Create a fresh agent of the same type
+                    cls = type(agent)
+                    jid_str = str(agent.jid)
+                    name = jid_str.split("@")[0]
+                    new_agent = cls(
+                        config.XMPP_AGENTS[name]["jid"],
+                        config.XMPP_AGENTS[name]["password"],
+                    )
+                    await new_agent.start(auto_register=True)
+                    _agents[i] = new_agent
+                    log.info("Agent %s restarted successfully.", new_agent.jid)
+                except Exception as exc:
+                    log.error("Failed to restart agent %s: %s", jid_str, exc)
 
 
 async def stop_agents():
