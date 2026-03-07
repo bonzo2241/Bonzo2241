@@ -568,9 +568,21 @@ async def start_agents():
     # Start orchestrator first so it is ready to receive messages
     _agents = [orchestrator, monitoring, adaptation, notification]
 
+    max_retries = 5
     for agent in _agents:
-        await agent.start(auto_register=True)
-        log.info("Agent %s started.", agent.jid)
+        for attempt in range(1, max_retries + 1):
+            try:
+                await agent.start(auto_register=True)
+                log.info("Agent %s started.", agent.jid)
+                break
+            except Exception as exc:
+                if attempt == max_retries:
+                    log.error("Agent %s failed after %d attempts: %s", agent.jid, max_retries, exc)
+                    raise
+                wait = 2 ** attempt
+                log.warning("Agent %s connect attempt %d/%d failed: %s. Retrying in %ds…",
+                            agent.jid, attempt, max_retries, exc, wait)
+                await asyncio.sleep(wait)
 
 
 async def stop_agents():

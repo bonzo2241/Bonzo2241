@@ -93,6 +93,11 @@ def main():
         loop.run_forever()
     except KeyboardInterrupt:
         shutdown()
+    except Exception as exc:
+        log.error("SPADE agents failed: %s", exc)
+        log.info("Web server continues running without agents on port %d.", args.port)
+        log.info("Restart with --web-only to suppress this, or fix the XMPP server.")
+        flask_thread.join()
 
 
 if __name__ == "__main__":
