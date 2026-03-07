@@ -77,14 +77,12 @@ def main():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
-    def shutdown():
-        log.info("Shutting down agents …")
-        loop.run_until_complete(stop_agents())
-        loop.close()
-        sys.exit(0)
+    def request_shutdown():
+        log.info("Shutdown requested …")
+        loop.call_soon_threadsafe(loop.stop)
 
-    signal.signal(signal.SIGINT, lambda *_: shutdown())
-    signal.signal(signal.SIGTERM, lambda *_: shutdown())
+    signal.signal(signal.SIGINT, lambda *_: request_shutdown())
+    signal.signal(signal.SIGTERM, lambda *_: request_shutdown())
 
     try:
         log.info("Starting SPADE agents …")
@@ -93,12 +91,19 @@ def main():
         asyncio.ensure_future(watch_agents(), loop=loop)
         loop.run_forever()
     except KeyboardInterrupt:
-        shutdown()
+        pass
     except Exception as exc:
         log.error("SPADE agents failed: %s", exc)
         log.info("Web server continues running without agents on port %d.", args.port)
         log.info("Restart with --web-only to suppress this, or fix the XMPP server.")
         flask_thread.join()
+        return
+
+    # Graceful shutdown after loop.stop()
+    log.info("Shutting down agents …")
+    loop.run_until_complete(stop_agents())
+    loop.close()
+    log.info("All agents stopped. Exiting.")
 
 
 if __name__ == "__main__":
