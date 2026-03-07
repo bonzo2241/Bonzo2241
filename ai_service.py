@@ -44,18 +44,34 @@ def _get_client():
 
 
 def _chat(messages: list[dict], temperature: float = 0.7, max_tokens: int = 1024) -> str:
-    """Send a chat-completion request and return the assistant message text."""
+    """Send a chat-completion request and return the assistant message text.
+
+    Retries up to 2 times when the model returns empty content (common with
+    free-tier OpenRouter models).
+    """
+    import time
+
     client = _get_client()
-    response = client.chat.completions.create(
-        model=config.AI_MODEL,
-        messages=messages,
-        temperature=temperature,
-        max_tokens=max_tokens,
-    )
-    text = response.choices[0].message.content
-    if text is None:
-        raise ValueError("LLM returned empty content (content is None)")
-    return text.strip()
+    last_err: Exception | None = None
+
+    for attempt in range(3):
+        try:
+            response = client.chat.completions.create(
+                model=config.AI_MODEL,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
+            text = response.choices[0].message.content
+            if text is None:
+                raise ValueError("LLM returned empty content (content is None)")
+            return text.strip()
+        except ValueError as exc:
+            last_err = exc
+            log.warning("Attempt %d/3: %s – retrying …", attempt + 1, exc)
+            time.sleep(1)
+
+    raise last_err  # type: ignore[misc]
 
 
 # ===================================================================
@@ -296,8 +312,13 @@ def chat_answer(
 
 def _fallback_chat(question: str, topic_title: str | None) -> str:
     topic_part = f" по теме «{topic_title}»" if topic_title else ""
+    if not config.AI_ENABLED:
+        return (
+            f"Для ответа на вопрос{topic_part} требуется подключение к AI API. "
+            f"Задайте переменную окружения OPENAI_API_KEY и перезапустите приложение. "
+            f"А пока обратитесь к материалам курса или преподавателю."
+        )
     return (
-        f"Для ответа на вопрос{topic_part} требуется подключение к AI API. "
-        f"Задайте переменную окружения OPENAI_API_KEY и перезапустите приложение. "
-        f"А пока обратитесь к материалам курса или преподавателю."
+        f"К сожалению, AI-помощник временно не смог сформировать ответ{topic_part}. "
+        f"Пожалуйста, попробуйте переформулировать вопрос или повторите попытку чуть позже."
     )
