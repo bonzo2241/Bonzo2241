@@ -52,7 +52,10 @@ def _chat(messages: list[dict], temperature: float = 0.7, max_tokens: int = 1024
         temperature=temperature,
         max_tokens=max_tokens,
     )
-    return response.choices[0].message.content.strip()
+    text = response.choices[0].message.content
+    if text is None:
+        raise ValueError("LLM returned empty content (content is None)")
+    return text.strip()
 
 
 # ===================================================================
