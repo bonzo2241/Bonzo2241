@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Групповые проекты{% endblock %}
+{% block content %}
+<h1>Групповые проекты</h1>
+
+{% if projects %}
+<div class="topics-grid">
+    {% for project in projects %}
+    <div class="topic-card">
+        <div class="topic-header">
+            <h3>{{ project.title }}</h3>
+            {% if project.id in my_memberships %}
+            <span class="badge badge-success">Участник</span>
+            {% endif %}
+        </div>
+        {% if project.topic %}
+        <p class="text-muted" style="font-size:0.8rem;margin-bottom:0.25rem;">Тема: {{ project.topic.title }}</p>
+        {% endif %}
+        <p class="topic-desc">{{ project.description[:150] }}{% if project.description|length > 150 %}…{% endif %}</p>
+        <div class="topic-meta">
+            <span>Участников: {{ project.members|length }} / {{ project.max_members }}</span>
+            {% if project.deadline %}
+            <span>Дедлайн: {{ project.deadline.strftime('%d.%m.%Y') }}</span>
+            {% endif %}
+        </div>
+        <div class="topic-actions">
+            <a href="{{ url_for('student_project_detail', project_id=project.id) }}" class="btn btn-outline">Подробнее</a>
+            {% if project.id not in my_memberships and project.members|length < project.max_members %}
+            <form method="post" action="{{ url_for('join_project', project_id=project.id) }}" style="display:inline;">
+                <button type="submit" class="btn btn-primary">Вступить</button>
+            </form>
+            {% elif project.id not in my_memberships %}
+            <span class="badge badge-danger">Группа заполнена</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <p>Групповых проектов пока нет. Преподаватель скоро создаст проекты.</p>
+</div>
+{% endif %}
+{% endblock %}

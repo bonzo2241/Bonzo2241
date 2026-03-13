@@ -1,15 +1,65 @@
 {% extends "base.html" %}
 {% block title %}Темы курса{% endblock %}
 {% block content %}
-<h1>Доступные темы</h1>
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;">
+    <h1 style="margin:0;">Доступные темы</h1>
+    {% if profile %}
+    <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;">
+        <a href="{{ url_for('student_profile') }}" style="text-decoration:none;">
+            <span class="badge {% if profile.trust_score <= 33 %}badge-danger{% elif profile.trust_score <= 66 %}badge-warning{% else %}badge-success{% endif %}"
+                  title="Trust Score — индекс доверия системы к вам">
+                Trust: {{ profile.trust_score | round(0) | int }}
+            </span>
+        </a>
+        <a href="{{ url_for('student_profile') }}" style="text-decoration:none;">
+            <span class="badge {% if profile.sri <= 25 %}badge-danger{% elif profile.sri <= 50 %}badge-warning{% else %}badge-success{% endif %}"
+                  title="Self-Regulation Index — ваша саморегуляция">
+                SRI: {{ profile.sri | round(0) | int }}
+            </span>
+        </a>
+        <a href="{{ url_for('student_profile') }}" class="btn btn-sm btn-outline">Профиль</a>
+    </div>
+    {% endif %}
+</div>
 
 {% if recommendations %}
 <div class="section-card recommendations-card">
     <h3>Рекомендации от системы</h3>
+    {% if profile and profile.trust_mode == 'informational' %}
+    <p class="text-muted" style="font-size:0.85rem;">
+        Режим: <strong>Информационный</strong> — система объясняет, ничего не делает без вашего подтверждения.
+    </p>
+    {% elif profile and profile.trust_mode == 'autonomous' %}
+    <p class="text-muted" style="font-size:0.85rem;">
+        Режим: <strong>Автономный</strong> — система адаптирует обучение самостоятельно и уведомляет постфактум.
+    </p>
+    {% endif %}
     {% for rec in recommendations %}
     <div class="recommendation-item">
         <p>{{ rec.recommendation }}</p>
-        <small class="text-muted">{{ rec.created_at.strftime('%d.%m.%Y %H:%M') }}</small>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+            <small class="text-muted">{{ rec.created_at.strftime('%d.%m.%Y %H:%M') }}</small>
+            {% set current_uid = session.get('user_id') %}
+            {% set already_acted = rec.interactions | selectattr('student_id', 'equalto', current_uid) | list %}
+            {% if not already_acted %}
+            <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+                <form method="post" action="{{ url_for('recommendation_interact', adaptation_id=rec.id) }}" style="display:inline;">
+                    <input type="hidden" name="action" value="accepted">
+                    <button type="submit" class="btn btn-sm btn-primary">Принять</button>
+                </form>
+                <form method="post" action="{{ url_for('recommendation_interact', adaptation_id=rec.id) }}" style="display:inline;">
+                    <input type="hidden" name="action" value="self_verified">
+                    <button type="submit" class="btn btn-sm btn-outline">Решил сам</button>
+                </form>
+                <form method="post" action="{{ url_for('recommendation_interact', adaptation_id=rec.id) }}" style="display:inline;">
+                    <input type="hidden" name="action" value="ignored">
+                    <button type="submit" class="btn btn-sm btn-outline">Игнорировать</button>
+                </form>
+            </div>
+            {% else %}
+            <span class="text-muted" style="font-size:0.8rem;">Отреагировано</span>
+            {% endif %}
+        </div>
     </div>
     {% endfor %}
 </div>

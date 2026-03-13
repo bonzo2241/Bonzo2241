@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Создать проект{% endblock %}
+{% block content %}
+<div class="breadcrumb">
+    <a href="{{ url_for('teacher_projects') }}">Проекты</a> &raquo; Создать
+</div>
+<h1>Создать групповой проект</h1>
+
+<div class="section-card" style="max-width:600px;">
+    <form method="post">
+        <div class="form-group">
+            <label class="form-label">Название проекта *</label>
+            <input type="text" name="title" class="form-control" required placeholder="Например: Анализ данных о климате">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Описание</label>
+            <textarea name="description" class="form-control" rows="4" placeholder="Цель, требования, ожидаемые результаты…"></textarea>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Связанная тема (необязательно)</label>
+            <select name="topic_id" class="form-control">
+                <option value="">— Не привязана к теме —</option>
+                {% for topic in topics %}
+                <option value="{{ topic.id }}">{{ topic.title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Максимум участников</label>
+            <input type="number" name="max_members" class="form-control" value="5" min="2" max="20">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Дедлайн (необязательно)</label>
+            <input type="date" name="deadline" class="form-control">
+        </div>
+        <div style="display:flex;gap:0.75rem;margin-top:1rem;">
+            <button type="submit" class="btn btn-primary">Создать проект</button>
+            <a href="{{ url_for('teacher_projects') }}" class="btn btn-outline">Отмена</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

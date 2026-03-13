@@ -127,3 +127,149 @@ class ChatMessage(db.Model):
 
     student = db.relationship("User", backref="chat_messages")
     topic = db.relationship("Topic", backref="chat_messages")
+
+
+class StudentProfile(db.Model):
+    """Trust Score and Self-Regulation Index (SRI) per student."""
+    __tablename__ = "student_profiles"
+
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey("users.id"), unique=True, nullable=False)
+    trust_score = db.Column(db.Float, default=50.0)   # 0–100, starts at 50
+    sri = db.Column(db.Float, default=50.0)            # 0–100 Self-Regulation Index
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    student = db.relationship("User", backref=db.backref("profile", uselist=False))
+
+    @property
+    def trust_mode(self) -> str:
+        """Operational mode derived from Trust Score."""
+        if self.trust_score <= 33:
+            return "informational"   # все объясняет, ничего без подтверждения
+        elif self.trust_score <= 66:
+            return "mixed"           # смешанный режим
+        else:
+            return "autonomous"      # действует сам, уведомляет постфактум
+
+    @property
+    def trust_mode_label(self) -> str:
+        labels = {
+            "informational": "Информационный",
+            "mixed": "Смешанный",
+            "autonomous": "Автономный",
+        }
+        return labels.get(self.trust_mode, self.trust_mode)
+
+    @property
+    def sri_mode(self) -> str:
+        """Intervention level derived from SRI."""
+        if self.sri <= 25:
+            return "active"     # активный — система максимально вмешивается
+        elif self.sri <= 50:
+            return "standard"
+        elif self.sri <= 75:
+            return "passive"
+        else:
+            return "minimal"    # минимальный — система почти не вмешивается
+
+    @property
+    def sri_mode_label(self) -> str:
+        labels = {
+            "active": "Активный",
+            "standard": "Стандартный",
+            "passive": "Пассивный",
+            "minimal": "Минимальный",
+        }
+        return labels.get(self.sri_mode, self.sri_mode)
+
+
+class ConsentProfile(db.Model):
+    """Granular per-student consent settings."""
+    __tablename__ = "consent_profiles"
+
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey("users.id"), unique=True, nullable=False)
+    # Basic level (mandatory, always True)
+    academic_data = db.Column(db.Boolean, default=True)
+    # Extended level (each item independently opt-in)
+    behavioral_analytics = db.Column(db.Boolean, default=False)
+    team_data = db.Column(db.Boolean, default=False)
+    engagement_index = db.Column(db.Boolean, default=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    student = db.relationship("User", backref=db.backref("consent", uselist=False))
+
+
+class RecommendationInteraction(db.Model):
+    """Records how a student responded to an agent recommendation.
+
+    Actions:
+      accepted   – followed the recommendation; outcome tracked later
+      ignored    – dismissed without acting
+      self_verified – resolved on their own without acting on the recommendation
+    Trust delta:
+      accepted + good outcome → +3
+      self_verified           →  0
+      ignored                 → −2
+    """
+    __tablename__ = "recommendation_interactions"
+
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    adaptation_log_id = db.Column(db.Integer, db.ForeignKey("adaptation_logs.id"), nullable=False)
+    action = db.Column(db.String(20), nullable=False)   # accepted | ignored | self_verified
+    outcome_score = db.Column(db.Float, nullable=True)  # score after action (for trust update)
+    trust_delta = db.Column(db.Float, default=0.0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    student = db.relationship("User", backref="recommendation_interactions")
+    adaptation_log = db.relationship("AdaptationLog", backref="interactions")
+
+
+class Project(db.Model):
+    """Group project created by a teacher."""
+    __tablename__ = "projects"
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, default="")
+    created_by = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    topic_id = db.Column(db.Integer, db.ForeignKey("topics.id"), nullable=True)
+    deadline = db.Column(db.DateTime, nullable=True)
+    max_members = db.Column(db.Integer, default=5)
+    status = db.Column(db.String(20), default="active")  # active | completed | archived
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    creator = db.relationship("User", backref="projects_created")
+    topic = db.relationship("Topic", backref="projects")
+    members = db.relationship("ProjectMembership", backref="project", cascade="all, delete-orphan")
+    tasks = db.relationship("ProjectTask", backref="project", cascade="all, delete-orphan")
+
+
+class ProjectMembership(db.Model):
+    """Student membership in a group project."""
+    __tablename__ = "project_memberships"
+
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"), nullable=False)
+    student_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    role = db.Column(db.String(20), default="member")  # member | lead
+    joined_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    student = db.relationship("User", backref="project_memberships")
+
+
+class ProjectTask(db.Model):
+    """Individual task within a group project."""
+    __tablename__ = "project_tasks"
+
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, default="")
+    assigned_to = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+    status = db.Column(db.String(20), default="pending")  # pending | in_progress | done
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    completed_at = db.Column(db.DateTime, nullable=True)
+
+    assignee = db.relationship("User", backref="assigned_tasks")

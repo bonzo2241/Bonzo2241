@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Управление проектами{% endblock %}
+{% block content %}
+<div class="section-header">
+    <h1>Групповые проекты</h1>
+    <a href="{{ url_for('create_project') }}" class="btn btn-primary">Создать проект</a>
+</div>
+
+{% if project_stats %}
+<div class="section-card">
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Название</th>
+                    <th>Статус</th>
+                    <th>Участников</th>
+                    <th>Задач</th>
+                    <th>Выполнено</th>
+                    <th>Дедлайн</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ps in project_stats %}
+                <tr>
+                    <td>{{ ps.project.title }}</td>
+                    <td>
+                        <span class="badge {% if ps.project.status == 'active' %}badge-success{% elif ps.project.status == 'completed' %}badge-warning{% else %}badge-secondary{% endif %}">
+                            {% if ps.project.status == 'active' %}Активен
+                            {% elif ps.project.status == 'completed' %}Завершён
+                            {% else %}Архив{% endif %}
+                        </span>
+                    </td>
+                    <td>{{ ps.member_count }} / {{ ps.project.max_members }}</td>
+                    <td>{{ ps.task_count }}</td>
+                    <td>
+                        {% if ps.task_count > 0 %}
+                        {{ ps.done_count }} / {{ ps.task_count }}
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>{{ ps.project.deadline.strftime('%d.%m.%Y') if ps.project.deadline else '—' }}</td>
+                    <td><a href="{{ url_for('teacher_project_detail', project_id=ps.project.id) }}" class="btn btn-sm btn-outline">Управление</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="empty-state">
+    <p>Проектов ещё нет. <a href="{{ url_for('create_project') }}">Создайте первый проект</a>.</p>
+</div>
+{% endif %}
+{% endblock %}

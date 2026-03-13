@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Проект: {{ project.title }}{% endblock %}
+{% block content %}
+<div class="breadcrumb">
+    <a href="{{ url_for('student_projects') }}">Проекты</a> &raquo; {{ project.title }}
+</div>
+
+<div class="section-header">
+    <h1>{{ project.title }}</h1>
+    {% if membership %}
+    <form method="post" action="{{ url_for('leave_project', project_id=project.id) }}">
+        <button type="submit" class="btn btn-outline" onclick="return confirm('Выйти из проекта?')">Выйти из проекта</button>
+    </form>
+    {% elif project.members|length < project.max_members %}
+    <form method="post" action="{{ url_for('join_project', project_id=project.id) }}">
+        <button type="submit" class="btn btn-primary">Вступить в проект</button>
+    </form>
+    {% endif %}
+</div>
+
+{% if project.description %}
+<div class="section-card">
+    <p>{{ project.description }}</p>
+    <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:0.5rem;">
+        {% if project.topic %}
+        <span class="text-muted">Тема: <strong>{{ project.topic.title }}</strong></span>
+        {% endif %}
+        {% if project.deadline %}
+        <span class="text-muted">Дедлайн: <strong>{{ project.deadline.strftime('%d.%m.%Y') }}</strong></span>
+        {% endif %}
+        <span class="text-muted">Участников: <strong>{{ members|length }} / {{ project.max_members }}</strong></span>
+    </div>
+</div>
+{% endif %}
+
+<div class="dashboard-grid">
+    <!-- Members -->
+    <div class="section-card">
+        <h3>Участники</h3>
+        {% if members %}
+        <ul style="list-style:none;padding:0;margin:0;">
+            {% for m in members %}
+            <li style="display:flex;align-items:center;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid var(--border);">
+                <span>
+                    {{ m.student.full_name or m.student.username }}
+                    {% if m.role == 'lead' %}<span class="badge badge-warning">Лидер</span>{% endif %}
+                </span>
+                {% set mp = member_profiles.get(m.student_id) %}
+                {% if mp and mp.show_details %}
+                    <span class="text-muted" style="font-size:0.8rem;">
+                        Trust: {{ mp.profile.trust_score | round(0) | int }}
+                        · SRI: {{ mp.profile.sri | round(0) | int }}
+                    </span>
+                {% elif mp %}
+                    <span class="text-muted" style="font-size:0.8rem;">(данные скрыты)</span>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-muted">Участников пока нет.</p>
+        {% endif %}
+    </div>
+
+    <!-- Tasks -->
+    <div class="section-card">
+        <h3>Задачи</h3>
+        {% if project.tasks %}
+        <ul style="list-style:none;padding:0;margin:0;">
+            {% for task in project.tasks %}
+            <li style="padding:0.5rem 0;border-bottom:1px solid var(--border);">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.5rem;">
+                    <div>
+                        <strong>{{ task.title }}</strong>
+                        {% if task.assignee %}
+                        <span class="text-muted" style="font-size:0.8rem;">→ {{ task.assignee.full_name or task.assignee.username }}</span>
+                        {% endif %}
+                        {% if task.description %}
+                        <p style="margin:0.2rem 0 0;font-size:0.85rem;color:var(--muted);">{{ task.description }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <span class="badge {% if task.status == 'done' %}badge-success{% elif task.status == 'in_progress' %}badge-warning{% else %}badge-secondary{% endif %}">
+                            {% if task.status == 'done' %}Готово{% elif task.status == 'in_progress' %}В работе{% else %}Ожидает{% endif %}
+                        </span>
+                    </div>
+                </div>
+                {% if membership %}
+                <form method="post" action="{{ url_for('update_task', project_id=project.id, task_id=task.id) }}" style="margin-top:0.4rem;display:flex;gap:0.5rem;">
+                    <select name="status" style="font-size:0.8rem;padding:0.2rem 0.4rem;border:1px solid var(--border);border-radius:4px;background:var(--bg-card);">
+                        <option value="pending" {% if task.status == 'pending' %}selected{% endif %}>Ожидает</option>
+                        <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>В работе</option>
+                        <option value="done" {% if task.status == 'done' %}selected{% endif %}>Готово</option>
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-outline">Обновить</button>
+                </form>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-muted">Задач пока нет.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
