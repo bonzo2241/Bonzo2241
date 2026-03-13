@@ -7,6 +7,7 @@ from __future__ import annotations
 import functools
 import json
 import random
+import time
 from datetime import datetime, timedelta
 
 from flask import (
@@ -56,6 +57,7 @@ def create_app() -> Flask:
             conn.execute(db.text("PRAGMA journal_mode=WAL"))
             conn.commit()
         _seed_demo_data()
+        _ensure_student_profiles()
 
     _register_routes(app)
     return app
@@ -418,13 +420,62 @@ def _seed_demo_data():  # noqa: C901
 #  Student Profile helpers (Trust Score, SRI, Consent)
 # -------------------------------------------------------------------
 
+def _commit_with_retry(max_attempts: int = 5) -> bool:
+    """Try to commit the current session, retrying on SQLite lock errors.
+
+    Returns True on success, False if all attempts failed.
+    SQLite WAL mode still allows only one writer at a time; SPADE agents
+    and Flask can collide, so we back off and retry rather than crashing.
+    """
+    from sqlalchemy.exc import OperationalError
+    for attempt in range(max_attempts):
+        try:
+            db.session.commit()
+            return True
+        except OperationalError as exc:
+            if "database is locked" not in str(exc).lower():
+                raise
+            db.session.rollback()
+            time.sleep(0.1 * (2 ** attempt))   # 0.1s, 0.2s, 0.4s, 0.8s, 1.6s
+    return False
+
+
+def _ensure_student_profiles():
+    """Pre-create StudentProfile and ConsentProfile for every student.
+
+    Called once at app startup so that normal requests never need to INSERT
+    these rows — they only do fast SELECTs, avoiding write-lock contention
+    with SPADE agents.
+    """
+    students = User.query.filter_by(role="student").all()
+    changed = False
+    for s in students:
+        if not StudentProfile.query.filter_by(student_id=s.id).first():
+            db.session.add(StudentProfile(student_id=s.id, trust_score=50.0, sri=50.0))
+            changed = True
+        if not ConsentProfile.query.filter_by(student_id=s.id).first():
+            db.session.add(ConsentProfile(student_id=s.id))
+            changed = True
+    if changed:
+        db.session.commit()
+
+
 def get_or_create_profile(student_id: int) -> "StudentProfile":
-    """Return the StudentProfile for a student, creating it if absent."""
+    """Return the StudentProfile for a student, creating it if absent.
+
+    Uses retry logic to survive transient SQLite write-lock errors caused
+    by concurrent SPADE agent writes.
+    """
     profile = StudentProfile.query.filter_by(student_id=student_id).first()
     if profile is None:
         profile = StudentProfile(student_id=student_id, trust_score=50.0, sri=50.0)
         db.session.add(profile)
-        db.session.commit()
+        if not _commit_with_retry():
+            db.session.rollback()
+            # Another process may have inserted it in the meantime
+            profile = StudentProfile.query.filter_by(student_id=student_id).first()
+            if profile is None:
+                profile = StudentProfile(student_id=student_id, trust_score=50.0, sri=50.0)
     return profile
 
 
@@ -434,7 +485,11 @@ def get_or_create_consent(student_id: int) -> "ConsentProfile":
     if consent is None:
         consent = ConsentProfile(student_id=student_id)
         db.session.add(consent)
-        db.session.commit()
+        if not _commit_with_retry():
+            db.session.rollback()
+            existing = ConsentProfile.query.filter_by(student_id=student_id).first()
+            if existing:
+                return existing
     return consent
 
 
