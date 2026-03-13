@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}Мой профиль{% endblock %}
+{% block content %}
+<h1>Мой профиль</h1>
+
+<!-- Trust Score & SRI -->
+<div class="dashboard-grid">
+    <div class="section-card">
+        <h3>Trust Score — индекс доверия</h3>
+        <div class="overall-stats">
+            <div class="stat-box">
+                <div class="stat-value
+                    {% if profile.trust_score <= 33 %}text-danger
+                    {% elif profile.trust_score <= 66 %}text-warning
+                    {% else %}text-success{% endif %}">
+                    {{ profile.trust_score | round(1) }}
+                </div>
+                <div class="stat-label">из 100</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" style="font-size:1rem;">{{ profile.trust_mode_label }}</div>
+                <div class="stat-label">Режим работы системы</div>
+            </div>
+        </div>
+        <div class="progress-bar-wrap" style="margin:0.75rem 0;">
+            <div class="progress-bar
+                {% if profile.trust_score <= 33 %}progress-danger
+                {% elif profile.trust_score <= 66 %}progress-warning
+                {% else %}progress-success{% endif %}"
+                style="width:{{ profile.trust_score }}%"></div>
+        </div>
+        <p class="text-muted" style="font-size:0.85rem;">
+            <strong>0–33</strong> — информационный (система объясняет, не действует без подтверждения) ·
+            <strong>34–66</strong> — смешанный ·
+            <strong>67–100</strong> — автономный (действует сам, уведомляет постфактум)
+        </p>
+        <p class="text-muted" style="font-size:0.85rem;">
+            Принял рекомендацию с хорошим результатом → <strong>+3</strong> ·
+            Верифицировал сам → <strong>0</strong> ·
+            Проигнорировал → <strong>−2</strong>
+        </p>
+    </div>
+
+    <div class="section-card">
+        <h3>Self-Regulation Index (SRI)</h3>
+        <div class="overall-stats">
+            <div class="stat-box">
+                <div class="stat-value
+                    {% if profile.sri <= 25 %}text-danger
+                    {% elif profile.sri <= 50 %}text-warning
+                    {% elif profile.sri <= 75 %}text-success
+                    {% else %}text-success{% endif %}">
+                    {{ profile.sri | round(1) }}
+                </div>
+                <div class="stat-label">из 100</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" style="font-size:1rem;">{{ profile.sri_mode_label }}</div>
+                <div class="stat-label">Режим вмешательства</div>
+            </div>
+        </div>
+        <div class="progress-bar-wrap" style="margin:0.75rem 0;">
+            <div class="progress-bar
+                {% if profile.sri <= 25 %}progress-danger
+                {% elif profile.sri <= 50 %}progress-warning
+                {% else %}progress-success{% endif %}"
+                style="width:{{ profile.sri }}%"></div>
+        </div>
+        <p class="text-muted" style="font-size:0.85rem;">
+            <strong>0–25</strong> — активный ·
+            <strong>26–50</strong> — стандартный ·
+            <strong>51–75</strong> — пассивный ·
+            <strong>76–100</strong> — минимальный (система «выключается»)
+        </p>
+        <p class="text-muted" style="font-size:0.85rem;">
+            Компоненты (равные веса): инициативность · проактивность · динамика обращений к AI-помощнику
+        </p>
+    </div>
+</div>
+
+<!-- Consent Profile -->
+<div class="section-card">
+    <h3>Consent Profile — профиль согласия</h3>
+    <p>Базовый уровень (обязательный): академические данные — оценки, дедлайны, выполнение заданий.</p>
+    <form method="post" action="{{ url_for('update_consent') }}">
+        <div class="form-group" style="margin-bottom:1rem;">
+            <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                <input type="checkbox" name="academic_data" checked disabled>
+                <span><strong>Академические данные</strong> — оценки, дедлайны, выполнение заданий</span>
+                <span class="badge badge-success" style="font-size:0.7rem;">Обязательно</span>
+            </label>
+        </div>
+        <hr style="margin:0.75rem 0;">
+        <p><strong>Расширенный уровень</strong> — каждый пункт включается независимо:</p>
+        <div class="form-group" style="margin-bottom:0.75rem;">
+            <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                <input type="checkbox" name="behavioral_analytics" {% if consent.behavioral_analytics %}checked{% endif %}>
+                <span><strong>Поведенческая аналитика</strong> — паттерны работы, время сессий, активность</span>
+            </label>
+        </div>
+        <div class="form-group" style="margin-bottom:0.75rem;">
+            <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                <input type="checkbox" name="team_data" {% if consent.team_data %}checked{% endif %}>
+                <span><strong>Командные данные</strong> — участие в групповых проектах, вклад в команду</span>
+            </label>
+            <p class="text-muted" style="font-size:0.8rem;margin-left:1.4rem;">
+                Если в команде один участник разрешил, а другой нет — каждый видит только то, на что дал согласие.
+            </p>
+        </div>
+        <div class="form-group" style="margin-bottom:1rem;">
+            <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                <input type="checkbox" name="engagement_index" {% if consent.engagement_index %}checked{% endif %}>
+                <span><strong>Индекс вовлечённости</strong> — частота входов, прохождение тестов, обращения к AI</span>
+            </label>
+        </div>
+        {% if profile.trust_score >= 67 %}
+        <div class="alert alert-info" style="margin-bottom:0.75rem;">
+            Ваш Trust Score достаточно высок ({{ profile.trust_score | round(1) }}). Рекомендуем разрешить дополнительные
+            данные, чтобы система могла точнее адаптировать обучение.
+        </div>
+        {% endif %}
+        <button type="submit" class="btn btn-primary">Сохранить настройки</button>
+    </form>
+    <p class="text-muted" style="font-size:0.8rem;margin-top:0.5rem;">
+        Обновлено: {{ consent.updated_at.strftime('%d.%m.%Y %H:%M') }}
+    </p>
+</div>
+
+<!-- Interaction history -->
+{% if interactions %}
+<div class="section-card">
+    <h3>История взаимодействий с рекомендациями</h3>
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Дата</th>
+                    <th>Действие</th>
+                    <th>Изменение Trust Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for i in interactions %}
+                <tr>
+                    <td>{{ i.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                    <td>
+                        {% if i.action == 'accepted' %}
+                            <span class="badge badge-success">Принята</span>
+                        {% elif i.action == 'ignored' %}
+                            <span class="badge badge-danger">Проигнорирована</span>
+                        {% else %}
+                            <span class="badge badge-warning">Верифицирована самостоятельно</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if i.trust_delta > 0 %}
+                            <span class="text-success">+{{ i.trust_delta | round(1) }}</span>
+                        {% elif i.trust_delta < 0 %}
+                            <span class="text-danger">{{ i.trust_delta | round(1) }}</span>
+                        {% else %}
+                            <span class="text-muted">0</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

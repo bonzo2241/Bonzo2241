@@ -24,9 +24,15 @@ from models import (
     AdaptationLog,
     AgentReport,
     ChatMessage,
+    ConsentProfile,
     OrchestratorLog,
+    Project,
+    ProjectMembership,
+    ProjectTask,
     Question,
+    RecommendationInteraction,
     StudentAnswer,
+    StudentProfile,
     Topic,
     User,
     db,
@@ -409,6 +415,142 @@ def _seed_demo_data():  # noqa: C901
 
 
 # -------------------------------------------------------------------
+#  Student Profile helpers (Trust Score, SRI, Consent)
+# -------------------------------------------------------------------
+
+def get_or_create_profile(student_id: int) -> "StudentProfile":
+    """Return the StudentProfile for a student, creating it if absent."""
+    profile = StudentProfile.query.filter_by(student_id=student_id).first()
+    if profile is None:
+        profile = StudentProfile(student_id=student_id, trust_score=50.0, sri=50.0)
+        db.session.add(profile)
+        db.session.commit()
+    return profile
+
+
+def get_or_create_consent(student_id: int) -> "ConsentProfile":
+    """Return the ConsentProfile for a student, creating it if absent."""
+    consent = ConsentProfile.query.filter_by(student_id=student_id).first()
+    if consent is None:
+        consent = ConsentProfile(student_id=student_id)
+        db.session.add(consent)
+        db.session.commit()
+    return consent
+
+
+def compute_sri(student_id: int) -> float:  # noqa: C901
+    """Compute Self-Regulation Index (0–100) from three equal-weight components.
+
+    1. Initiative  – share of quiz attempts made without a preceding recommendation.
+    2. Proactivity – share of activity that happened before first monitoring alert.
+    3. Request dynamics – decreasing trend of chat requests over the past two weeks.
+    """
+    now = datetime.utcnow()
+    one_week_ago = now - timedelta(weeks=1)
+    two_weeks_ago = now - timedelta(weeks=2)
+
+    # ── Component 1: Initiative ──────────────────────────────────────────────
+    answers = (
+        StudentAnswer.query
+        .filter_by(student_id=student_id)
+        .order_by(StudentAnswer.created_at)
+        .all()
+    )
+    recommendations = (
+        AdaptationLog.query
+        .filter_by(student_id=student_id)
+        .order_by(AdaptationLog.created_at)
+        .all()
+    )
+    rec_times = [r.created_at for r in recommendations]
+
+    initiative_score = 100.0
+    if answers:
+        independent = 0
+        for a in answers:
+            preceded = any(
+                a.created_at - timedelta(hours=48) <= rt <= a.created_at
+                for rt in rec_times
+            )
+            if not preceded:
+                independent += 1
+        initiative_score = independent / len(answers) * 100
+
+    # ── Component 2: Proactivity ─────────────────────────────────────────────
+    alerts = (
+        AgentReport.query
+        .filter_by(student_id=student_id)
+        .filter(AgentReport.severity.in_(["warning", "danger"]))
+        .order_by(AgentReport.created_at)
+        .all()
+    )
+    proactivity_score = 100.0
+    if alerts and answers:
+        first_alert_time = min(a.created_at for a in alerts)
+        before = sum(1 for a in answers if a.created_at < first_alert_time)
+        total_a = len(answers)
+        proactivity_score = (before / total_a * 100) if total_a else 100.0
+
+    # ── Component 3: Request dynamics ────────────────────────────────────────
+    week1 = (
+        ChatMessage.query
+        .filter_by(student_id=student_id, role="user")
+        .filter(ChatMessage.created_at >= two_weeks_ago,
+                ChatMessage.created_at < one_week_ago)
+        .count()
+    )
+    week2 = (
+        ChatMessage.query
+        .filter_by(student_id=student_id, role="user")
+        .filter(ChatMessage.created_at >= one_week_ago)
+        .count()
+    )
+    if week1 == 0 and week2 == 0:
+        dynamics_score = 75.0   # no requests at all → relatively independent
+    elif week1 == 0:
+        dynamics_score = 25.0   # suddenly started asking a lot
+    else:
+        ratio = week2 / week1
+        if ratio < 0.5:
+            dynamics_score = 100.0
+        elif ratio < 1.0:
+            dynamics_score = 75.0
+        elif ratio == 1.0:
+            dynamics_score = 50.0
+        elif ratio < 2.0:
+            dynamics_score = 25.0
+        else:
+            dynamics_score = 0.0
+
+    sri = (initiative_score + proactivity_score + dynamics_score) / 3
+    return round(max(0.0, min(100.0, sri)), 1)
+
+
+def update_trust_score(student_id: int, action: str, had_good_outcome: bool = False) -> float:
+    """Update Trust Score after a recommendation interaction.
+
+    action values:
+      "accepted"       – student followed the recommendation
+      "ignored"        – student dismissed without acting
+      "self_verified"  – student resolved on their own
+
+    Returns the new trust score.
+    """
+    delta_map = {
+        "accepted": 3.0 if had_good_outcome else 0.0,
+        "self_verified": 0.0,
+        "ignored": -2.0,
+    }
+    delta = delta_map.get(action, 0.0)
+
+    profile = get_or_create_profile(student_id)
+    profile.trust_score = max(0.0, min(100.0, profile.trust_score + delta))
+    profile.updated_at = datetime.utcnow()
+    db.session.commit()
+    return profile.trust_score
+
+
+# -------------------------------------------------------------------
 #  Auth helpers
 # -------------------------------------------------------------------
 
@@ -496,13 +638,14 @@ def _register_routes(app: Flask):
     @app.route("/student")
     @login_required
     def student_dashboard():
+        student_id = session["user_id"]
         topics = Topic.query.order_by(Topic.created_at.desc()).all()
 
         # Compute per-topic stats for this student
         topic_stats = {}
         for topic in topics:
             answers = StudentAnswer.query.filter_by(
-                student_id=session["user_id"], topic_id=topic.id,
+                student_id=student_id, topic_id=topic.id,
             ).all()
             if answers:
                 total = len(answers)
@@ -516,17 +659,26 @@ def _register_routes(app: Flask):
         # Adaptation recommendations for this student
         recommendations = (
             AdaptationLog.query
-            .filter_by(student_id=session["user_id"])
+            .filter_by(student_id=student_id)
             .order_by(AdaptationLog.created_at.desc())
             .limit(10)
             .all()
         )
+
+        # Load / refresh profile (Trust Score + SRI)
+        profile = get_or_create_profile(student_id)
+        new_sri = compute_sri(student_id)
+        if profile.sri != new_sri:
+            profile.sri = new_sri
+            profile.updated_at = datetime.utcnow()
+            db.session.commit()
 
         return render_template(
             "student_dashboard.html",
             topics=topics,
             topic_stats=topic_stats,
             recommendations=recommendations,
+            profile=profile,
         )
 
     @app.route("/topic/<int:topic_id>")
@@ -627,7 +779,8 @@ def _register_routes(app: Flask):
             total = len(answers)
             correct = sum(1 for a in answers if a.is_correct)
             pct = round(correct / total * 100, 1) if total else None
-            student_stats.append({"student": s, "total": total, "correct": correct, "pct": pct})
+            profile = get_or_create_profile(s.id)
+            student_stats.append({"student": s, "total": total, "correct": correct, "pct": pct, "profile": profile})
 
         return render_template(
             "teacher_dashboard.html",
@@ -739,6 +892,9 @@ def _register_routes(app: Flask):
         overall_correct = sum(1 for a in answers if a.is_correct)
         overall_pct = round(overall_correct / overall_total * 100, 1) if overall_total else 0
 
+        profile = get_or_create_profile(student_id)
+        consent = get_or_create_consent(student_id)
+
         return render_template(
             "student_detail.html",
             student=student,
@@ -748,6 +904,8 @@ def _register_routes(app: Flask):
             overall_total=overall_total,
             overall_correct=overall_correct,
             overall_pct=overall_pct,
+            profile=profile,
+            consent=consent,
         )
 
     # -- AI: Chat assistant for students --------------------------------
@@ -824,6 +982,437 @@ def _register_routes(app: Flask):
         db.session.commit()
 
         return redirect(url_for("student_chat", topic_id=topic_id))
+
+    # -- Student profile: Trust Score, SRI, Consent ----------------------
+
+    @app.route("/student/profile")
+    @login_required
+    def student_profile():
+        student_id = session["user_id"]
+        profile = get_or_create_profile(student_id)
+        consent = get_or_create_consent(student_id)
+        # Refresh SRI on every visit
+        new_sri = compute_sri(student_id)
+        if profile.sri != new_sri:
+            profile.sri = new_sri
+            profile.updated_at = datetime.utcnow()
+            db.session.commit()
+
+        interactions = (
+            RecommendationInteraction.query
+            .filter_by(student_id=student_id)
+            .order_by(RecommendationInteraction.created_at.desc())
+            .limit(10)
+            .all()
+        )
+        return render_template(
+            "student_profile.html",
+            profile=profile,
+            consent=consent,
+            interactions=interactions,
+        )
+
+    @app.route("/student/consent", methods=["POST"])
+    @login_required
+    def update_consent():
+        student_id = session["user_id"]
+        consent = get_or_create_consent(student_id)
+        consent.behavioral_analytics = bool(request.form.get("behavioral_analytics"))
+        consent.team_data = bool(request.form.get("team_data"))
+        consent.engagement_index = bool(request.form.get("engagement_index"))
+        consent.updated_at = datetime.utcnow()
+        db.session.commit()
+
+        # If trust score is high enough → suggest expanding consent
+        profile = get_or_create_profile(student_id)
+        if profile.trust_score >= 67:
+            flash(
+                "Профиль согласия обновлён. Ваш высокий Trust Score позволяет расширить доступ к данным.",
+                "success",
+            )
+        else:
+            flash("Профиль согласия обновлён.", "success")
+        return redirect(url_for("student_profile"))
+
+    @app.route("/student/recommendation/<int:adaptation_id>/interact", methods=["POST"])
+    @login_required
+    def recommendation_interact(adaptation_id: int):
+        """Record student's response to a recommendation and update Trust Score."""
+        student_id = session["user_id"]
+        action = request.form.get("action", "ignored")
+        if action not in ("accepted", "ignored", "self_verified"):
+            action = "ignored"
+
+        adaptation = AdaptationLog.query.get_or_404(adaptation_id)
+        if adaptation.student_id != student_id:
+            flash("Нет доступа.", "danger")
+            return redirect(url_for("student_dashboard"))
+
+        # Determine outcome: compare score before/after the recommendation
+        had_good_outcome = False
+        if action == "accepted":
+            topic_id = adaptation.topic_id
+            if topic_id:
+                answers_after = (
+                    StudentAnswer.query
+                    .filter_by(student_id=student_id, topic_id=topic_id)
+                    .filter(StudentAnswer.created_at > adaptation.created_at)
+                    .all()
+                )
+                if answers_after:
+                    correct = sum(1 for a in answers_after if a.is_correct)
+                    pct = correct / len(answers_after) * 100
+                    had_good_outcome = pct >= 60
+
+        new_trust = update_trust_score(student_id, action, had_good_outcome)
+
+        interaction = RecommendationInteraction(
+            student_id=student_id,
+            adaptation_log_id=adaptation_id,
+            action=action,
+            trust_delta=(3.0 if (action == "accepted" and had_good_outcome)
+                         else (-2.0 if action == "ignored" else 0.0)),
+        )
+        db.session.add(interaction)
+        db.session.commit()
+
+        labels = {
+            "accepted": "принята",
+            "ignored": "проигнорирована",
+            "self_verified": "верифицирована самостоятельно",
+        }
+        flash(
+            f"Рекомендация {labels[action]}. Trust Score: {new_trust:.1f}.",
+            "info",
+        )
+        return redirect(url_for("student_dashboard"))
+
+    # -- Student: Group Projects ------------------------------------------
+
+    @app.route("/student/projects")
+    @login_required
+    def student_projects():
+        student_id = session["user_id"]
+        all_projects = Project.query.filter_by(status="active").order_by(Project.created_at.desc()).all()
+        my_memberships = {m.project_id for m in ProjectMembership.query.filter_by(student_id=student_id).all()}
+        return render_template(
+            "student_projects.html",
+            projects=all_projects,
+            my_memberships=my_memberships,
+        )
+
+    @app.route("/student/project/<int:project_id>")
+    @login_required
+    def student_project_detail(project_id: int):
+        project = Project.query.get_or_404(project_id)
+        student_id = session["user_id"]
+        membership = ProjectMembership.query.filter_by(
+            project_id=project_id, student_id=student_id
+        ).first()
+        members = (
+            ProjectMembership.query
+            .filter_by(project_id=project_id)
+            .all()
+        )
+        # Trust Score-aware view: only show full team data if consent allows
+        member_profiles = {}
+        for m in members:
+            consent = get_or_create_consent(m.student_id)
+            profile = get_or_create_profile(m.student_id)
+            member_profiles[m.student_id] = {
+                "profile": profile,
+                "consent": consent,
+                "show_details": consent.team_data or m.student_id == student_id,
+            }
+        return render_template(
+            "project_detail.html",
+            project=project,
+            membership=membership,
+            members=members,
+            member_profiles=member_profiles,
+        )
+
+    @app.route("/student/project/<int:project_id>/join", methods=["POST"])
+    @login_required
+    def join_project(project_id: int):
+        student_id = session["user_id"]
+        project = Project.query.get_or_404(project_id)
+        if project.status != "active":
+            flash("Проект недоступен для вступления.", "warning")
+            return redirect(url_for("student_projects"))
+        if ProjectMembership.query.filter_by(project_id=project_id, student_id=student_id).first():
+            flash("Вы уже участник этого проекта.", "info")
+            return redirect(url_for("student_project_detail", project_id=project_id))
+        current_count = ProjectMembership.query.filter_by(project_id=project_id).count()
+        if current_count >= project.max_members:
+            flash("Группа уже заполнена.", "warning")
+            return redirect(url_for("student_projects"))
+        # First member automatically becomes team lead
+        role = "lead" if current_count == 0 else "member"
+        membership = ProjectMembership(project_id=project_id, student_id=student_id, role=role)
+        db.session.add(membership)
+        db.session.commit()
+        if role == "lead":
+            flash(f"Вы вступили в проект «{project.title}» и стали тимлидом.", "success")
+        else:
+            flash(f"Вы вступили в проект «{project.title}».", "success")
+        return redirect(url_for("student_project_detail", project_id=project_id))
+
+    @app.route("/student/project/<int:project_id>/leave", methods=["POST"])
+    @login_required
+    def leave_project(project_id: int):
+        student_id = session["user_id"]
+        membership = ProjectMembership.query.filter_by(
+            project_id=project_id, student_id=student_id
+        ).first_or_404()
+        was_lead = membership.role == "lead"
+        db.session.delete(membership)
+        db.session.flush()
+        # If the lead left, promote the earliest remaining member
+        if was_lead:
+            next_member = (
+                ProjectMembership.query
+                .filter_by(project_id=project_id)
+                .order_by(ProjectMembership.joined_at)
+                .first()
+            )
+            if next_member:
+                next_member.role = "lead"
+                flash(
+                    f"Вы вышли из проекта. Роль тимлида передана участнику "
+                    f"«{next_member.student.full_name or next_member.student.username}».",
+                    "info",
+                )
+            else:
+                flash("Вы вышли из проекта.", "info")
+        else:
+            flash("Вы вышли из проекта.", "info")
+        db.session.commit()
+        return redirect(url_for("student_projects"))
+
+    @app.route("/student/project/<int:project_id>/task/add", methods=["POST"])
+    @login_required
+    def lead_add_task(project_id: int):
+        """Only the team lead can create tasks."""
+        student_id = session["user_id"]
+        membership = ProjectMembership.query.filter_by(
+            project_id=project_id, student_id=student_id
+        ).first()
+        if not membership or membership.role != "lead":
+            flash("Создавать задачи может только тимлид.", "danger")
+            return redirect(url_for("student_project_detail", project_id=project_id))
+        title = request.form.get("title", "").strip()
+        description = request.form.get("description", "").strip()
+        assigned_to = request.form.get("assigned_to", type=int)
+        if not title:
+            flash("Название задачи обязательно.", "warning")
+            return redirect(url_for("student_project_detail", project_id=project_id))
+        # assigned_to must be a project member
+        if assigned_to:
+            valid = ProjectMembership.query.filter_by(
+                project_id=project_id, student_id=assigned_to
+            ).first()
+            if not valid:
+                assigned_to = None
+        task = ProjectTask(
+            project_id=project_id,
+            title=title,
+            description=description,
+            assigned_to=assigned_to or None,
+        )
+        db.session.add(task)
+        db.session.commit()
+        flash("Задача добавлена.", "success")
+        return redirect(url_for("student_project_detail", project_id=project_id))
+
+    @app.route("/student/project/<int:project_id>/task/<int:task_id>/delete", methods=["POST"])
+    @login_required
+    def lead_delete_task(project_id: int, task_id: int):
+        """Only the team lead can delete tasks."""
+        student_id = session["user_id"]
+        membership = ProjectMembership.query.filter_by(
+            project_id=project_id, student_id=student_id
+        ).first()
+        if not membership or membership.role != "lead":
+            flash("Удалять задачи может только тимлид.", "danger")
+            return redirect(url_for("student_project_detail", project_id=project_id))
+        task = ProjectTask.query.filter_by(id=task_id, project_id=project_id).first_or_404()
+        db.session.delete(task)
+        db.session.commit()
+        flash("Задача удалена.", "info")
+        return redirect(url_for("student_project_detail", project_id=project_id))
+
+    @app.route("/student/project/<int:project_id>/task/<int:task_id>/update", methods=["POST"])
+    @login_required
+    def update_task(project_id: int, task_id: int):
+        student_id = session["user_id"]
+        membership = ProjectMembership.query.filter_by(
+            project_id=project_id, student_id=student_id
+        ).first()
+        if not membership:
+            flash("Вы не участник этого проекта.", "danger")
+            return redirect(url_for("student_projects"))
+        task = ProjectTask.query.filter_by(id=task_id, project_id=project_id).first_or_404()
+        # Lead can update any task; regular member only their own
+        if membership.role != "lead" and task.assigned_to != student_id:
+            flash("Обновлять статус можно только своей задачи.", "warning")
+            return redirect(url_for("student_project_detail", project_id=project_id))
+        new_status = request.form.get("status", task.status)
+        if new_status in ("pending", "in_progress", "done"):
+            task.status = new_status
+            if new_status == "done" and task.completed_at is None:
+                task.completed_at = datetime.utcnow()
+            db.session.commit()
+            flash("Статус задачи обновлён.", "success")
+        return redirect(url_for("student_project_detail", project_id=project_id))
+
+    @app.route("/student/project/<int:project_id>/transfer-lead", methods=["POST"])
+    @login_required
+    def transfer_lead(project_id: int):
+        """Current lead transfers their role to another member."""
+        student_id = session["user_id"]
+        membership = ProjectMembership.query.filter_by(
+            project_id=project_id, student_id=student_id
+        ).first()
+        if not membership or membership.role != "lead":
+            flash("Передать роль тимлида может только текущий тимлид.", "danger")
+            return redirect(url_for("student_project_detail", project_id=project_id))
+        new_lead_id = request.form.get("new_lead_id", type=int)
+        if not new_lead_id or new_lead_id == student_id:
+            flash("Выберите другого участника.", "warning")
+            return redirect(url_for("student_project_detail", project_id=project_id))
+        new_lead_membership = ProjectMembership.query.filter_by(
+            project_id=project_id, student_id=new_lead_id
+        ).first()
+        if not new_lead_membership:
+            flash("Участник не найден в проекте.", "warning")
+            return redirect(url_for("student_project_detail", project_id=project_id))
+        membership.role = "member"
+        new_lead_membership.role = "lead"
+        db.session.commit()
+        flash(
+            f"Роль тимлида передана участнику "
+            f"«{new_lead_membership.student.full_name or new_lead_membership.student.username}».",
+            "success",
+        )
+        return redirect(url_for("student_project_detail", project_id=project_id))
+
+    # -- Teacher: Projects ------------------------------------------------
+
+    @app.route("/teacher/projects")
+    @teacher_required
+    def teacher_projects():
+        projects = Project.query.order_by(Project.created_at.desc()).all()
+        project_stats = []
+        for p in projects:
+            member_count = ProjectMembership.query.filter_by(project_id=p.id).count()
+            task_count = ProjectTask.query.filter_by(project_id=p.id).count()
+            done_count = ProjectTask.query.filter_by(project_id=p.id, status="done").count()
+            project_stats.append({
+                "project": p,
+                "member_count": member_count,
+                "task_count": task_count,
+                "done_count": done_count,
+            })
+        return render_template("teacher_projects.html", project_stats=project_stats)
+
+    @app.route("/teacher/project/create", methods=["GET", "POST"])
+    @teacher_required
+    def create_project():
+        topics = Topic.query.order_by(Topic.title).all()
+        if request.method == "POST":
+            title = request.form.get("title", "").strip()
+            description = request.form.get("description", "").strip()
+            topic_id = request.form.get("topic_id", type=int)
+            max_members = request.form.get("max_members", 5, type=int)
+            deadline_str = request.form.get("deadline", "").strip()
+            if not title:
+                flash("Название проекта обязательно.", "warning")
+                return render_template("create_project.html", topics=topics)
+            deadline = None
+            if deadline_str:
+                try:
+                    deadline = datetime.strptime(deadline_str, "%Y-%m-%d")
+                except ValueError:
+                    flash("Неверный формат даты.", "warning")
+                    return render_template("create_project.html", topics=topics)
+            project = Project(
+                title=title,
+                description=description,
+                created_by=session["user_id"],
+                topic_id=topic_id or None,
+                max_members=max(2, min(max_members, 20)),
+                deadline=deadline,
+            )
+            db.session.add(project)
+            db.session.commit()
+            flash(f"Проект «{title}» создан.", "success")
+            return redirect(url_for("teacher_project_detail", project_id=project.id))
+        return render_template("create_project.html", topics=topics)
+
+    @app.route("/teacher/project/<int:project_id>")
+    @teacher_required
+    def teacher_project_detail(project_id: int):
+        project = Project.query.get_or_404(project_id)
+        members = ProjectMembership.query.filter_by(project_id=project_id).all()
+        tasks = ProjectTask.query.filter_by(project_id=project_id).order_by(ProjectTask.created_at).all()
+        students = User.query.filter_by(role="student").all()
+        # Compute per-member profiles for team Trust Score / SRI / consent view
+        member_profiles = {}
+        for m in members:
+            profile = get_or_create_profile(m.student_id)
+            consent = get_or_create_consent(m.student_id)
+            member_profiles[m.student_id] = {"profile": profile, "consent": consent}
+        # Team Trust Score = minimum among members (per spec)
+        team_trust = (
+            min(mp["profile"].trust_score for mp in member_profiles.values())
+            if member_profiles else None
+        )
+        return render_template(
+            "teacher_project_detail.html",
+            project=project,
+            members=members,
+            tasks=tasks,
+            students=students,
+            member_profiles=member_profiles,
+            team_trust=team_trust,
+        )
+
+    @app.route("/teacher/project/<int:project_id>/assign-lead", methods=["POST"])
+    @teacher_required
+    def teacher_assign_lead(project_id: int):
+        """Teacher can manually reassign the team lead role."""
+        new_lead_id = request.form.get("new_lead_id", type=int)
+        if not new_lead_id:
+            flash("Выберите участника.", "warning")
+            return redirect(url_for("teacher_project_detail", project_id=project_id))
+        # Remove current lead
+        ProjectMembership.query.filter_by(project_id=project_id, role="lead").update({"role": "member"})
+        new_lead = ProjectMembership.query.filter_by(
+            project_id=project_id, student_id=new_lead_id
+        ).first()
+        if not new_lead:
+            flash("Участник не найден в проекте.", "warning")
+            db.session.rollback()
+            return redirect(url_for("teacher_project_detail", project_id=project_id))
+        new_lead.role = "lead"
+        db.session.commit()
+        flash(
+            f"Тимлид назначен: «{new_lead.student.full_name or new_lead.student.username}».",
+            "success",
+        )
+        return redirect(url_for("teacher_project_detail", project_id=project_id))
+
+    @app.route("/teacher/project/<int:project_id>/status", methods=["POST"])
+    @teacher_required
+    def update_project_status(project_id: int):
+        project = Project.query.get_or_404(project_id)
+        new_status = request.form.get("status", project.status)
+        if new_status in ("active", "completed", "archived"):
+            project.status = new_status
+            db.session.commit()
+            flash("Статус проекта обновлён.", "success")
+        return redirect(url_for("teacher_project_detail", project_id=project_id))
 
     # -- AI: Question generation for teachers ---------------------------
 

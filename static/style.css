@@ -817,3 +817,31 @@ h3 { color: var(--blue-900); margin-bottom: .75rem; font-size: 1.1rem; }
     .overall-stats { flex-direction: column; align-items: center; }
     .result-actions { flex-direction: column; }
 }
+
+/* ---- Trust Score / SRI / Consent additions ---- */
+
+.badge-secondary { background: var(--gray-200); color: var(--gray-700); }
+
+.progress-bar-wrap {
+    background: var(--gray-200);
+    border-radius: 20px;
+    height: 10px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    border-radius: 20px;
+    transition: width .4s ease;
+}
+
+.progress-success { background: var(--success); }
+.progress-warning { background: var(--warning); }
+.progress-danger  { background: var(--danger); }
+
+/* Variables referenced in new templates */
+:root {
+    --bg-card: var(--white);
+    --border:  var(--gray-200);
+    --muted:   var(--gray-600);
+}

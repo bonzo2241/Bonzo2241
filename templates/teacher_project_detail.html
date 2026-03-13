@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block title %}Проект: {{ project.title }}{% endblock %}
+{% block content %}
+<div class="breadcrumb">
+    <a href="{{ url_for('teacher_projects') }}">Проекты</a> &raquo; {{ project.title }}
+</div>
+
+<div class="section-header">
+    <h1>{{ project.title }}</h1>
+    <form method="post" action="{{ url_for('update_project_status', project_id=project.id) }}"
+          style="display:flex;gap:0.5rem;align-items:center;">
+        <select name="status" style="padding:0.35rem 0.6rem;border:1px solid var(--border);
+                border-radius:4px;background:var(--bg-card);">
+            <option value="active"    {% if project.status == 'active' %}selected{% endif %}>Активен</option>
+            <option value="completed" {% if project.status == 'completed' %}selected{% endif %}>Завершён</option>
+            <option value="archived"  {% if project.status == 'archived' %}selected{% endif %}>Архив</option>
+        </select>
+        <button type="submit" class="btn btn-sm btn-outline">Обновить статус</button>
+    </form>
+</div>
+
+{% if project.description %}
+<div class="section-card">
+    <p>{{ project.description }}</p>
+    <div style="display:flex;gap:1.5rem;flex-wrap:wrap;margin-top:0.5rem;">
+        {% if project.topic %}<span class="text-muted">Тема: <strong>{{ project.topic.title }}</strong></span>{% endif %}
+        {% if project.deadline %}<span class="text-muted">Дедлайн: <strong>{{ project.deadline.strftime('%d.%m.%Y') }}</strong></span>{% endif %}
+        <span class="text-muted">Создан: {{ project.created_at.strftime('%d.%m.%Y') }}</span>
+    </div>
+</div>
+{% endif %}
+
+<!-- Team Trust Score -->
+{% if team_trust is not none %}
+<div class="section-card">
+    <h3>Командный Trust Score</h3>
+    <p class="text-muted" style="font-size:0.85rem;">
+        В командном контексте система ориентируется на <strong>минимальный</strong> Trust Score среди участников.
+    </p>
+    <div class="overall-stats">
+        <div class="stat-box">
+            <div class="stat-value {% if team_trust <= 33 %}text-danger{% elif team_trust <= 66 %}text-warning{% else %}text-success{% endif %}">
+                {{ team_trust | round(1) }}
+            </div>
+            <div class="stat-label">Командный Trust Score</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value" style="font-size:1rem;">
+                {% if team_trust <= 33 %}Информационный
+                {% elif team_trust <= 66 %}Смешанный
+                {% else %}Автономный{% endif %}
+            </div>
+            <div class="stat-label">Режим для команды</div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="dashboard-grid">
+    <!-- Members -->
+    <div class="section-card">
+        <h3>Участники ({{ members|length }} / {{ project.max_members }})</h3>
+        {% if members %}
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr><th>Студент</th><th>Роль</th><th>Trust</th><th>SRI</th><th>Команд. данные</th></tr>
+                </thead>
+                <tbody>
+                    {% for m in members %}
+                    {% set mp = member_profiles.get(m.student_id) %}
+                    <tr>
+                        <td>{{ m.student.full_name or m.student.username }}</td>
+                        <td>
+                            {% if m.role == 'lead' %}
+                            <span class="badge badge-warning">Тимлид</span>
+                            {% else %}
+                            <span class="badge badge-secondary">Участник</span>
+                            {% endif %}
+                        </td>
+                        {% if mp %}
+                        <td>
+                            <span class="badge {% if mp.profile.trust_score <= 33 %}badge-danger
+                                {% elif mp.profile.trust_score <= 66 %}badge-warning
+                                {% else %}badge-success{% endif %}">
+                                {{ mp.profile.trust_score | round(0) | int }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge {% if mp.profile.sri <= 25 %}badge-danger
+                                {% elif mp.profile.sri <= 50 %}badge-warning
+                                {% else %}badge-success{% endif %}">
+                                {{ mp.profile.sri | round(0) | int }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if mp.consent.team_data %}
+                                <span class="badge badge-success">Разрешено</span>
+                            {% else %}
+                                <span class="badge badge-secondary">Ограничено</span>
+                            {% endif %}
+                        </td>
+                        {% else %}
+                        <td colspan="3" class="text-muted">—</td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p class="text-muted" style="font-size:0.8rem;margin-top:0.5rem;">
+            Преподаватель видит всё с пометкой об ограничениях согласия.
+        </p>
+
+        <!-- Assign lead -->
+        {% if members %}
+        <details style="margin-top:1rem;">
+            <summary style="cursor:pointer;font-size:0.9rem;color:var(--blue-700);">
+                Назначить тимлида вручную
+            </summary>
+            <form method="post" action="{{ url_for('teacher_assign_lead', project_id=project.id) }}"
+                  style="display:flex;gap:0.5rem;margin-top:0.5rem;flex-wrap:wrap;">
+                <select name="new_lead_id" style="padding:0.35rem 0.6rem;border:1px solid var(--border);
+                        border-radius:4px;background:var(--bg-card);">
+                    {% for m in members %}
+                    <option value="{{ m.student_id }}">
+                        {{ m.student.full_name or m.student.username }}
+                        {% if m.role == 'lead' %}(текущий тимлид){% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-sm btn-primary"
+                        onclick="return confirm('Назначить тимлидом?')">Назначить</button>
+            </form>
+        </details>
+        {% endif %}
+        {% else %}
+        <p class="text-muted">Участников пока нет.</p>
+        {% endif %}
+    </div>
+
+    <!-- Tasks (read-only for teacher) -->
+    <div class="section-card">
+        <h3>Задачи</h3>
+        <p class="text-muted" style="font-size:0.85rem;margin-bottom:0.75rem;">
+            Задачи создаёт и назначает <strong>тимлид</strong> проекта.
+        </p>
+        {% if tasks %}
+        <ul style="list-style:none;padding:0;margin:0;">
+            {% for task in tasks %}
+            <li style="padding:0.5rem 0;border-bottom:1px solid var(--border);">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                    <div>
+                        <strong>{{ task.title }}</strong>
+                        {% if task.assignee %}
+                        <span class="text-muted" style="font-size:0.8rem;">
+                            → {{ task.assignee.full_name or task.assignee.username }}
+                        </span>
+                        {% else %}
+                        <span class="text-muted" style="font-size:0.8rem;">— не назначено</span>
+                        {% endif %}
+                        {% if task.description %}
+                        <p style="margin:0.2rem 0 0;font-size:0.85rem;color:var(--muted);">
+                            {{ task.description }}</p>
+                        {% endif %}
+                    </div>
+                    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.25rem;">
+                        <span class="badge {% if task.status == 'done' %}badge-success
+                            {% elif task.status == 'in_progress' %}badge-warning
+                            {% else %}badge-secondary{% endif %}">
+                            {% if task.status == 'done' %}Готово
+                            {% elif task.status == 'in_progress' %}В работе
+                            {% else %}Ожидает{% endif %}
+                        </span>
+                        {% if task.completed_at %}
+                        <small class="text-muted">{{ task.completed_at.strftime('%d.%m.%Y') }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-muted">Тимлид ещё не добавил задачи.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
