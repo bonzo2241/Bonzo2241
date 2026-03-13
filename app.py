@@ -1147,10 +1147,15 @@ def _register_routes(app: Flask):
         if current_count >= project.max_members:
             flash("Группа уже заполнена.", "warning")
             return redirect(url_for("student_projects"))
-        membership = ProjectMembership(project_id=project_id, student_id=student_id)
+        # First member automatically becomes team lead
+        role = "lead" if current_count == 0 else "member"
+        membership = ProjectMembership(project_id=project_id, student_id=student_id, role=role)
         db.session.add(membership)
         db.session.commit()
-        flash(f"Вы вступили в проект «{project.title}».", "success")
+        if role == "lead":
+            flash(f"Вы вступили в проект «{project.title}» и стали тимлидом.", "success")
+        else:
+            flash(f"Вы вступили в проект «{project.title}».", "success")
         return redirect(url_for("student_project_detail", project_id=project_id))
 
     @app.route("/student/project/<int:project_id>/leave", methods=["POST"])
@@ -1160,10 +1165,82 @@ def _register_routes(app: Flask):
         membership = ProjectMembership.query.filter_by(
             project_id=project_id, student_id=student_id
         ).first_or_404()
+        was_lead = membership.role == "lead"
         db.session.delete(membership)
+        db.session.flush()
+        # If the lead left, promote the earliest remaining member
+        if was_lead:
+            next_member = (
+                ProjectMembership.query
+                .filter_by(project_id=project_id)
+                .order_by(ProjectMembership.joined_at)
+                .first()
+            )
+            if next_member:
+                next_member.role = "lead"
+                flash(
+                    f"Вы вышли из проекта. Роль тимлида передана участнику "
+                    f"«{next_member.student.full_name or next_member.student.username}».",
+                    "info",
+                )
+            else:
+                flash("Вы вышли из проекта.", "info")
+        else:
+            flash("Вы вышли из проекта.", "info")
         db.session.commit()
-        flash("Вы вышли из проекта.", "info")
         return redirect(url_for("student_projects"))
+
+    @app.route("/student/project/<int:project_id>/task/add", methods=["POST"])
+    @login_required
+    def lead_add_task(project_id: int):
+        """Only the team lead can create tasks."""
+        student_id = session["user_id"]
+        membership = ProjectMembership.query.filter_by(
+            project_id=project_id, student_id=student_id
+        ).first()
+        if not membership or membership.role != "lead":
+            flash("Создавать задачи может только тимлид.", "danger")
+            return redirect(url_for("student_project_detail", project_id=project_id))
+        title = request.form.get("title", "").strip()
+        description = request.form.get("description", "").strip()
+        assigned_to = request.form.get("assigned_to", type=int)
+        if not title:
+            flash("Название задачи обязательно.", "warning")
+            return redirect(url_for("student_project_detail", project_id=project_id))
+        # assigned_to must be a project member
+        if assigned_to:
+            valid = ProjectMembership.query.filter_by(
+                project_id=project_id, student_id=assigned_to
+            ).first()
+            if not valid:
+                assigned_to = None
+        task = ProjectTask(
+            project_id=project_id,
+            title=title,
+            description=description,
+            assigned_to=assigned_to or None,
+        )
+        db.session.add(task)
+        db.session.commit()
+        flash("Задача добавлена.", "success")
+        return redirect(url_for("student_project_detail", project_id=project_id))
+
+    @app.route("/student/project/<int:project_id>/task/<int:task_id>/delete", methods=["POST"])
+    @login_required
+    def lead_delete_task(project_id: int, task_id: int):
+        """Only the team lead can delete tasks."""
+        student_id = session["user_id"]
+        membership = ProjectMembership.query.filter_by(
+            project_id=project_id, student_id=student_id
+        ).first()
+        if not membership or membership.role != "lead":
+            flash("Удалять задачи может только тимлид.", "danger")
+            return redirect(url_for("student_project_detail", project_id=project_id))
+        task = ProjectTask.query.filter_by(id=task_id, project_id=project_id).first_or_404()
+        db.session.delete(task)
+        db.session.commit()
+        flash("Задача удалена.", "info")
+        return redirect(url_for("student_project_detail", project_id=project_id))
 
     @app.route("/student/project/<int:project_id>/task/<int:task_id>/update", methods=["POST"])
     @login_required
@@ -1176,6 +1253,10 @@ def _register_routes(app: Flask):
             flash("Вы не участник этого проекта.", "danger")
             return redirect(url_for("student_projects"))
         task = ProjectTask.query.filter_by(id=task_id, project_id=project_id).first_or_404()
+        # Lead can update any task; regular member only their own
+        if membership.role != "lead" and task.assigned_to != student_id:
+            flash("Обновлять статус можно только своей задачи.", "warning")
+            return redirect(url_for("student_project_detail", project_id=project_id))
         new_status = request.form.get("status", task.status)
         if new_status in ("pending", "in_progress", "done"):
             task.status = new_status
@@ -1183,6 +1264,37 @@ def _register_routes(app: Flask):
                 task.completed_at = datetime.utcnow()
             db.session.commit()
             flash("Статус задачи обновлён.", "success")
+        return redirect(url_for("student_project_detail", project_id=project_id))
+
+    @app.route("/student/project/<int:project_id>/transfer-lead", methods=["POST"])
+    @login_required
+    def transfer_lead(project_id: int):
+        """Current lead transfers their role to another member."""
+        student_id = session["user_id"]
+        membership = ProjectMembership.query.filter_by(
+            project_id=project_id, student_id=student_id
+        ).first()
+        if not membership or membership.role != "lead":
+            flash("Передать роль тимлида может только текущий тимлид.", "danger")
+            return redirect(url_for("student_project_detail", project_id=project_id))
+        new_lead_id = request.form.get("new_lead_id", type=int)
+        if not new_lead_id or new_lead_id == student_id:
+            flash("Выберите другого участника.", "warning")
+            return redirect(url_for("student_project_detail", project_id=project_id))
+        new_lead_membership = ProjectMembership.query.filter_by(
+            project_id=project_id, student_id=new_lead_id
+        ).first()
+        if not new_lead_membership:
+            flash("Участник не найден в проекте.", "warning")
+            return redirect(url_for("student_project_detail", project_id=project_id))
+        membership.role = "member"
+        new_lead_membership.role = "lead"
+        db.session.commit()
+        flash(
+            f"Роль тимлида передана участнику "
+            f"«{new_lead_membership.student.full_name or new_lead_membership.student.username}».",
+            "success",
+        )
         return redirect(url_for("student_project_detail", project_id=project_id))
 
     # -- Teacher: Projects ------------------------------------------------
@@ -1266,25 +1378,29 @@ def _register_routes(app: Flask):
             team_trust=team_trust,
         )
 
-    @app.route("/teacher/project/<int:project_id>/task/add", methods=["POST"])
+    @app.route("/teacher/project/<int:project_id>/assign-lead", methods=["POST"])
     @teacher_required
-    def add_project_task(project_id: int):
-        Project.query.get_or_404(project_id)
-        title = request.form.get("title", "").strip()
-        description = request.form.get("description", "").strip()
-        assigned_to = request.form.get("assigned_to", type=int)
-        if not title:
-            flash("Название задачи обязательно.", "warning")
+    def teacher_assign_lead(project_id: int):
+        """Teacher can manually reassign the team lead role."""
+        new_lead_id = request.form.get("new_lead_id", type=int)
+        if not new_lead_id:
+            flash("Выберите участника.", "warning")
             return redirect(url_for("teacher_project_detail", project_id=project_id))
-        task = ProjectTask(
-            project_id=project_id,
-            title=title,
-            description=description,
-            assigned_to=assigned_to or None,
-        )
-        db.session.add(task)
+        # Remove current lead
+        ProjectMembership.query.filter_by(project_id=project_id, role="lead").update({"role": "member"})
+        new_lead = ProjectMembership.query.filter_by(
+            project_id=project_id, student_id=new_lead_id
+        ).first()
+        if not new_lead:
+            flash("Участник не найден в проекте.", "warning")
+            db.session.rollback()
+            return redirect(url_for("teacher_project_detail", project_id=project_id))
+        new_lead.role = "lead"
         db.session.commit()
-        flash("Задача добавлена.", "success")
+        flash(
+            f"Тимлид назначен: «{new_lead.student.full_name or new_lead.student.username}».",
+            "success",
+        )
         return redirect(url_for("teacher_project_detail", project_id=project_id))
 
     @app.route("/teacher/project/<int:project_id>/status", methods=["POST"])

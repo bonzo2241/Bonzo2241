@@ -7,11 +7,13 @@
 
 <div class="section-header">
     <h1>{{ project.title }}</h1>
-    <form method="post" action="{{ url_for('update_project_status', project_id=project.id) }}" style="display:flex;gap:0.5rem;align-items:center;">
-        <select name="status" style="padding:0.35rem 0.6rem;border:1px solid var(--border);border-radius:4px;background:var(--bg-card);">
-            <option value="active" {% if project.status == 'active' %}selected{% endif %}>Активен</option>
+    <form method="post" action="{{ url_for('update_project_status', project_id=project.id) }}"
+          style="display:flex;gap:0.5rem;align-items:center;">
+        <select name="status" style="padding:0.35rem 0.6rem;border:1px solid var(--border);
+                border-radius:4px;background:var(--bg-card);">
+            <option value="active"    {% if project.status == 'active' %}selected{% endif %}>Активен</option>
             <option value="completed" {% if project.status == 'completed' %}selected{% endif %}>Завершён</option>
-            <option value="archived" {% if project.status == 'archived' %}selected{% endif %}>Архив</option>
+            <option value="archived"  {% if project.status == 'archived' %}selected{% endif %}>Архив</option>
         </select>
         <button type="submit" class="btn btn-sm btn-outline">Обновить статус</button>
     </form>
@@ -62,24 +64,32 @@
         <div class="table-responsive">
             <table class="data-table">
                 <thead>
-                    <tr><th>Студент</th><th>Trust Score</th><th>SRI</th><th>Командные данные</th></tr>
+                    <tr><th>Студент</th><th>Роль</th><th>Trust</th><th>SRI</th><th>Команд. данные</th></tr>
                 </thead>
                 <tbody>
                     {% for m in members %}
                     {% set mp = member_profiles.get(m.student_id) %}
                     <tr>
+                        <td>{{ m.student.full_name or m.student.username }}</td>
                         <td>
-                            {{ m.student.full_name or m.student.username }}
-                            {% if m.role == 'lead' %}<span class="badge badge-warning">Лидер</span>{% endif %}
+                            {% if m.role == 'lead' %}
+                            <span class="badge badge-warning">Тимлид</span>
+                            {% else %}
+                            <span class="badge badge-secondary">Участник</span>
+                            {% endif %}
                         </td>
                         {% if mp %}
                         <td>
-                            <span class="badge {% if mp.profile.trust_score <= 33 %}badge-danger{% elif mp.profile.trust_score <= 66 %}badge-warning{% else %}badge-success{% endif %}">
+                            <span class="badge {% if mp.profile.trust_score <= 33 %}badge-danger
+                                {% elif mp.profile.trust_score <= 66 %}badge-warning
+                                {% else %}badge-success{% endif %}">
                                 {{ mp.profile.trust_score | round(0) | int }}
                             </span>
                         </td>
                         <td>
-                            <span class="badge {% if mp.profile.sri <= 25 %}badge-danger{% elif mp.profile.sri <= 50 %}badge-warning{% else %}badge-success{% endif %}">
+                            <span class="badge {% if mp.profile.sri <= 25 %}badge-danger
+                                {% elif mp.profile.sri <= 50 %}badge-warning
+                                {% else %}badge-success{% endif %}">
                                 {{ mp.profile.sri | round(0) | int }}
                             </span>
                         </td>
@@ -99,31 +109,42 @@
             </table>
         </div>
         <p class="text-muted" style="font-size:0.8rem;margin-top:0.5rem;">
-            Если участник не разрешил командные данные — система формирует разные представления для каждого.
-            Преподаватель видит всё с пометкой об ограничениях.
+            Преподаватель видит всё с пометкой об ограничениях согласия.
         </p>
+
+        <!-- Assign lead -->
+        {% if members %}
+        <details style="margin-top:1rem;">
+            <summary style="cursor:pointer;font-size:0.9rem;color:var(--blue-700);">
+                Назначить тимлида вручную
+            </summary>
+            <form method="post" action="{{ url_for('teacher_assign_lead', project_id=project.id) }}"
+                  style="display:flex;gap:0.5rem;margin-top:0.5rem;flex-wrap:wrap;">
+                <select name="new_lead_id" style="padding:0.35rem 0.6rem;border:1px solid var(--border);
+                        border-radius:4px;background:var(--bg-card);">
+                    {% for m in members %}
+                    <option value="{{ m.student_id }}">
+                        {{ m.student.full_name or m.student.username }}
+                        {% if m.role == 'lead' %}(текущий тимлид){% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-sm btn-primary"
+                        onclick="return confirm('Назначить тимлидом?')">Назначить</button>
+            </form>
+        </details>
+        {% endif %}
         {% else %}
         <p class="text-muted">Участников пока нет.</p>
         {% endif %}
     </div>
 
-    <!-- Tasks -->
+    <!-- Tasks (read-only for teacher) -->
     <div class="section-card">
         <h3>Задачи</h3>
-        <!-- Add task form -->
-        <form method="post" action="{{ url_for('add_project_task', project_id=project.id) }}" style="margin-bottom:1rem;">
-            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-                <input type="text" name="title" class="form-control" placeholder="Название задачи" required style="flex:1;min-width:180px;">
-                <select name="assigned_to" style="padding:0.45rem 0.6rem;border:1px solid var(--border);border-radius:4px;background:var(--bg-card);">
-                    <option value="">— Не назначено —</option>
-                    {% for m in members %}
-                    <option value="{{ m.student_id }}">{{ m.student.full_name or m.student.username }}</option>
-                    {% endfor %}
-                </select>
-                <button type="submit" class="btn btn-primary">Добавить</button>
-            </div>
-        </form>
-
+        <p class="text-muted" style="font-size:0.85rem;margin-bottom:0.75rem;">
+            Задачи создаёт и назначает <strong>тимлид</strong> проекта.
+        </p>
         {% if tasks %}
         <ul style="list-style:none;padding:0;margin:0;">
             {% for task in tasks %}
@@ -132,21 +153,35 @@
                     <div>
                         <strong>{{ task.title }}</strong>
                         {% if task.assignee %}
-                        <span class="text-muted" style="font-size:0.8rem;">→ {{ task.assignee.full_name or task.assignee.username }}</span>
+                        <span class="text-muted" style="font-size:0.8rem;">
+                            → {{ task.assignee.full_name or task.assignee.username }}
+                        </span>
+                        {% else %}
+                        <span class="text-muted" style="font-size:0.8rem;">— не назначено</span>
+                        {% endif %}
+                        {% if task.description %}
+                        <p style="margin:0.2rem 0 0;font-size:0.85rem;color:var(--muted);">
+                            {{ task.description }}</p>
                         {% endif %}
                     </div>
-                    <span class="badge {% if task.status == 'done' %}badge-success{% elif task.status == 'in_progress' %}badge-warning{% else %}badge-secondary{% endif %}">
-                        {% if task.status == 'done' %}Готово{% elif task.status == 'in_progress' %}В работе{% else %}Ожидает{% endif %}
-                    </span>
+                    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.25rem;">
+                        <span class="badge {% if task.status == 'done' %}badge-success
+                            {% elif task.status == 'in_progress' %}badge-warning
+                            {% else %}badge-secondary{% endif %}">
+                            {% if task.status == 'done' %}Готово
+                            {% elif task.status == 'in_progress' %}В работе
+                            {% else %}Ожидает{% endif %}
+                        </span>
+                        {% if task.completed_at %}
+                        <small class="text-muted">{{ task.completed_at.strftime('%d.%m.%Y') }}</small>
+                        {% endif %}
+                    </div>
                 </div>
-                {% if task.completed_at %}
-                <small class="text-muted">Завершено: {{ task.completed_at.strftime('%d.%m.%Y') }}</small>
-                {% endif %}
             </li>
             {% endfor %}
         </ul>
         {% else %}
-        <p class="text-muted">Задач пока нет.</p>
+        <p class="text-muted">Тимлид ещё не добавил задачи.</p>
         {% endif %}
     </div>
 </div>
