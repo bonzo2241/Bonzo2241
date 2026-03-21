@@ -581,6 +581,42 @@ def compute_sri(student_id: int) -> float:  # noqa: C901
     return round(max(0.0, min(100.0, sri)), 1)
 
 
+def compute_team_sri(project_id: int) -> "float | None":
+    """Team SRI = среднее индивидуальных SRI участников проекта."""
+    members = ProjectMembership.query.filter_by(project_id=project_id).all()
+    if not members:
+        return None
+    sris = [get_or_create_profile(m.student_id).sri for m in members]
+    return round(sum(sris) / len(sris), 1)
+
+
+def detect_diffusion(project_id: int, student_id: int, window_days: int = 7) -> bool:
+    """Диффузия ответственности: студент с высоким SRI (>60) без активности
+    по командным задачам за последние window_days дней.
+
+    Принцип: система отличает осознанную самостоятельность от пассивности,
+    замаскированной под неё (раздел 3.3 диплома).
+    """
+    profile = get_or_create_profile(student_id)
+    if profile.sri <= 60:
+        return False  # флаг актуален только при высоком SRI
+
+    tasks = ProjectTask.query.filter_by(
+        project_id=project_id, assigned_to=student_id
+    ).all()
+    if not tasks:
+        return False  # нет назначенных задач — не диффузия
+
+    cutoff = datetime.utcnow() - timedelta(days=window_days)
+    for task in tasks:
+        if task.status == "in_progress":
+            return False  # хотя бы одна задача активно выполняется
+        if task.status == "done" and task.completed_at and task.completed_at >= cutoff:
+            return False  # завершена в рамках окна наблюдения
+
+    return True  # все задачи pending или done давно — диффузия
+
+
 def update_trust_score(student_id: int, action: str, had_good_outcome: bool = False) -> float:
     """Update Trust Score after a recommendation interaction.
 
@@ -1169,15 +1205,30 @@ def _register_routes(app: Flask):
             .filter_by(project_id=project_id)
             .all()
         )
-        # Trust Score-aware view: only show full team data if consent allows
+        # Трёхсторонняя consent-резолюция (раздел 3.2 диплома):
+        # - сам студент: всегда видит свои данные
+        # - участник с team_data=True: видит данные тех, кто тоже дал согласие
+        # - участник с team_data=False: видит только своё
+        viewer_consent = get_or_create_consent(student_id)
         member_profiles = {}
         for m in members:
             consent = get_or_create_consent(m.student_id)
             profile = get_or_create_profile(m.student_id)
+            is_self = m.student_id == student_id
             member_profiles[m.student_id] = {
                 "profile": profile,
                 "consent": consent,
-                "show_details": consent.team_data or m.student_id == student_id,
+                "show_details": is_self or consent.team_data,
+            }
+        # Командный агрегат — только для тех, кто сам дал согласие team_data
+        team_aggregate = None
+        if viewer_consent.team_data and member_profiles:
+            sris = [mp["profile"].sri for mp in member_profiles.values()]
+            trusts = [mp["profile"].trust_score for mp in member_profiles.values()]
+            team_aggregate = {
+                "avg_sri": round(sum(sris) / len(sris), 1),
+                "avg_trust": round(sum(trusts) / len(trusts), 1),
+                "count": len(sris),
             }
         return render_template(
             "project_detail.html",
@@ -1185,6 +1236,9 @@ def _register_routes(app: Flask):
             membership=membership,
             members=members,
             member_profiles=member_profiles,
+            team_aggregate=team_aggregate,
+            viewer_consent=viewer_consent,
+            current_uid=student_id,
         )
 
     @app.route("/student/project/<int:project_id>/join", methods=["POST"])
@@ -1417,12 +1471,18 @@ def _register_routes(app: Flask):
         for m in members:
             profile = get_or_create_profile(m.student_id)
             consent = get_or_create_consent(m.student_id)
-            member_profiles[m.student_id] = {"profile": profile, "consent": consent}
-        # Team Trust Score = minimum among members (per spec)
+            member_profiles[m.student_id] = {
+                "profile": profile,
+                "consent": consent,
+                "diffusion_risk": detect_diffusion(project_id, m.student_id),
+            }
+        # Team Trust Score = minimum among members (per spec, раздел 3.1)
         team_trust = (
             min(mp["profile"].trust_score for mp in member_profiles.values())
             if member_profiles else None
         )
+        # Team SRI = среднее SRI участников (раздел 3.3)
+        team_sri = compute_team_sri(project_id)
         return render_template(
             "teacher_project_detail.html",
             project=project,
@@ -1431,6 +1491,7 @@ def _register_routes(app: Flask):
             students=students,
             member_profiles=member_profiles,
             team_trust=team_trust,
+            team_sri=team_sri,
         )
 
     @app.route("/teacher/project/<int:project_id>/assign-lead", methods=["POST"])

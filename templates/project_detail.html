@@ -39,6 +39,43 @@
 </div>
 {% endif %}
 
+<!-- Командная статистика (раздел 3.2 диплома: трёхсторонняя consent-резолюция) -->
+{% if team_aggregate %}
+<div class="section-card">
+    <h3>Командная статистика</h3>
+    <p class="text-muted" style="font-size:0.82rem;margin-bottom:0.75rem;">
+        Агрегированные данные команды без идентификации участников.
+        Доступны, потому что вы разрешили обмен командными данными в настройках профиля.
+    </p>
+    <div class="overall-stats">
+        <div class="stat-box">
+            <div class="stat-value {% if team_aggregate.avg_trust <= 33 %}text-danger
+                {% elif team_aggregate.avg_trust <= 66 %}text-warning
+                {% else %}text-success{% endif %}">
+                {{ team_aggregate.avg_trust | round(1) }}
+            </div>
+            <div class="stat-label">Ср. Trust Score<br><small class="text-muted">({{ team_aggregate.count }} участн.)</small></div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value {% if team_aggregate.avg_sri <= 25 %}text-danger
+                {% elif team_aggregate.avg_sri <= 50 %}text-warning
+                {% else %}text-success{% endif %}">
+                {{ team_aggregate.avg_sri | round(1) }}
+            </div>
+            <div class="stat-label">Ср. SRI команды</div>
+        </div>
+    </div>
+</div>
+{% elif viewer_consent and not viewer_consent.team_data and membership %}
+<div class="section-card" style="border-left:3px solid var(--border);padding-left:1rem;">
+    <p class="text-muted" style="font-size:0.85rem;margin:0;">
+        Командная статистика недоступна.
+        <a href="{{ url_for('student_profile') }}">Разрешите командные данные в профиле</a>,
+        чтобы видеть агрегированные показатели своей команды.
+    </p>
+</div>
+{% endif %}
+
 <div class="dashboard-grid">
     <!-- Members -->
     <div class="section-card">
