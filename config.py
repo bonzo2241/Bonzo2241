@@ -1,15 +1,17 @@
 import os
+from sqlalchemy.pool import NullPool
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 # Flask
 SECRET_KEY = os.environ.get("SECRET_KEY", "lms-secret-key-change-in-production")
 DATABASE_URI = "sqlite:///" + os.path.join(BASE_DIR, "lms.db")
-# SQLite concurrency: longer timeout to avoid "database is locked" when
-# Flask and SPADE agents write simultaneously.
+# SQLite concurrency: NullPool gives each thread its own connection so Flask
+# and SPADE agents never contend on the same connection object.
+# check_same_thread=False is required when SQLite is shared across threads.
 SQLALCHEMY_ENGINE_OPTIONS = {
-    "connect_args": {"timeout": 30},
-    "pool_pre_ping": True,
+    "connect_args": {"timeout": 30, "check_same_thread": False},
+    "poolclass": NullPool,
 }
 
 # XMPP server (Prosody / ejabberd / any XMPP-compliant server)

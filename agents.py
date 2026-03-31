@@ -207,6 +207,11 @@ class MonitoringAgent(Agent):
     to the OrchestratorAgent."""
 
     class MonitorBehaviour(PeriodicBehaviour):
+        async def on_start(self):
+            # Wait for adaptation and notification agents to connect before
+            # the first monitoring cycle, to avoid "No behaviour matched" warnings.
+            await asyncio.sleep(5)
+
         async def run(self):
             log.info("[MonitoringAgent] Running monitoring cycle …")
             with _app_context():
