@@ -1,5 +1,4 @@
 Flask>=2.2,<2.3
 Flask-SQLAlchemy>=3.0,<3.2
-spade>=4.0,<5
-slixmpp>=1.8,<1.9
+openclaw>=2026.4,<2027
 openai>=1.0,<2

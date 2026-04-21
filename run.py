@@ -3,16 +3,16 @@
 Entry point for the LMS multi-agent platform.
 
 Usage:
-    # Run web app only (no XMPP server required):
+    # Run web app only (no agents):
     python run.py --web-only
 
-    # Run with SPADE agents (requires XMPP server):
+    # Run with OpenClaw agents:
     python run.py
 
 Environment variables:
-    XMPP_SERVER    – XMPP server hostname (default: localhost)
-    SECRET_KEY     – Flask secret key
-    FLASK_PORT     – Web server port (default: 5000)
+    OPENCLAW_GATEWAY_URL – OpenClaw gateway URL (default: http://localhost:18789)
+    SECRET_KEY           – Flask secret key
+    FLASK_PORT           – Web server port (default: 5000)
 """
 
 import argparse
@@ -42,7 +42,7 @@ def main():
     parser.add_argument(
         "--web-only",
         action="store_true",
-        help="Run the web interface only, without starting SPADE agents.",
+        help="Run the web interface only, without starting OpenClaw agents.",
     )
     parser.add_argument(
         "--port",
@@ -60,7 +60,7 @@ def main():
         app.run(host="0.0.0.0", port=args.port, debug=True)
         return
 
-    # --- Full mode: web + SPADE agents ---
+    # --- Full mode: web + OpenClaw agents ---
     from agents import set_flask_app, start_agents, stop_agents, watch_agents
 
     set_flask_app(app)
@@ -73,7 +73,7 @@ def main():
     log.info("Flask web server started on port %d.", args.port)
     log.info("Open http://localhost:%d in your browser.", args.port)
 
-    # Start SPADE agents in the asyncio event loop
+    # Start OpenClaw agents in the asyncio event loop
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
@@ -87,7 +87,7 @@ def main():
     signal.signal(signal.SIGTERM, lambda *_: shutdown())
 
     try:
-        log.info("Starting SPADE agents …")
+        log.info("Starting OpenClaw agents …")
         loop.run_until_complete(start_agents())
         log.info("All agents are running. Press Ctrl+C to stop.")
         asyncio.ensure_future(watch_agents(), loop=loop)
@@ -95,9 +95,9 @@ def main():
     except KeyboardInterrupt:
         shutdown()
     except Exception as exc:
-        log.error("SPADE agents failed: %s", exc)
+        log.error("OpenClaw agents failed: %s", exc)
         log.info("Web server continues running without agents on port %d.", args.port)
-        log.info("Restart with --web-only to suppress this, or fix the XMPP server.")
+        log.info("Restart with --web-only to suppress this error.")
         flask_thread.join()
 
 
