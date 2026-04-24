@@ -40,7 +40,14 @@ class OpenClawTransport(AgentTransport):
     """
 
     def __init__(self, base_url: str, channels: list[str]):
-        from openclaw import OpenClawClient
+        try:
+            from openclaw import OpenClawClient
+        except ModuleNotFoundError as exc:
+            if exc.name == "tenacity":
+                raise ModuleNotFoundError(
+                    "OpenClaw dependency missing: tenacity. Run: pip install tenacity"
+                ) from exc
+            raise
 
         self._client = OpenClawClient(base_url=base_url)
         self._buffers: dict[str, asyncio.Queue] = {c: asyncio.Queue() for c in channels}

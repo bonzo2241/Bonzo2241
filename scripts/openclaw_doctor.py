@@ -52,6 +52,7 @@ def main() -> int:
 
     checks = [
         _check_import("openclaw"),
+        _check_import("tenacity"),
         _check_import("openai"),
         _check_env("OPENAI_API_KEY", required=True),
         _check_env("OPENAI_BASE_URL", required=False),
