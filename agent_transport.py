@@ -4,6 +4,20 @@ import asyncio
 from typing import Any
 
 
+def _ensure_cmdop_timeouterror() -> None:
+    """Compatibility shim for OpenClaw builds that expect cmdop.exceptions.TimeoutError."""
+    try:
+        import cmdop.exceptions as cmdop_exc
+    except Exception:
+        return
+
+    if not hasattr(cmdop_exc, "TimeoutError"):
+        class _CmdopTimeoutError(Exception):
+            pass
+
+        cmdop_exc.TimeoutError = _CmdopTimeoutError
+
+
 class AgentTransport:
     async def send(self, channel: str, payload: dict[str, Any]) -> None:  # pragma: no cover - interface
         raise NotImplementedError
@@ -40,12 +54,20 @@ class OpenClawTransport(AgentTransport):
     """
 
     def __init__(self, base_url: str, channels: list[str]):
+        _ensure_cmdop_timeouterror()
         try:
             from openclaw import OpenClawClient
         except ModuleNotFoundError as exc:
             if exc.name == "tenacity":
                 raise ModuleNotFoundError(
                     "OpenClaw dependency missing: tenacity. Run: pip install tenacity"
+                ) from exc
+            raise
+        except ImportError as exc:
+            if "cmdop.exceptions" in str(exc) and "TimeoutError" in str(exc):
+                raise ImportError(
+                    "Incompatible cmdop version: TimeoutError is missing in cmdop.exceptions. "
+                    "Try: pip install -U cmdop"
                 ) from exc
             raise
 

@@ -36,6 +36,18 @@ def _check_env(name: str, required: bool = True) -> Check:
     return Check(f"env: {name}", True, "not set (optional)")
 
 
+
+
+def _check_cmdop_timeouterror() -> Check:
+    try:
+        import cmdop.exceptions as cmdop_exc
+    except Exception as exc:
+        return Check("python import: cmdop.exceptions", False, repr(exc))
+
+    if hasattr(cmdop_exc, "TimeoutError"):
+        return Check("cmdop.exceptions.TimeoutError", True, "present")
+    return Check("cmdop.exceptions.TimeoutError", False, "missing (upgrade cmdop)")
+
 def _check_gateway(url: str) -> Check:
     parsed = urlparse(url)
     host = parsed.hostname or "localhost"
@@ -54,6 +66,7 @@ def main() -> int:
         _check_import("openclaw"),
         _check_import("tenacity"),
         _check_import("openai"),
+        _check_cmdop_timeouterror(),
         _check_env("OPENAI_API_KEY", required=True),
         _check_env("OPENAI_BASE_URL", required=False),
         _check_env("AI_MODEL", required=False),
