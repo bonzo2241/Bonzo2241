@@ -1,19 +1,16 @@
 """
-OpenClaw multi-agent system for LMS with orchestrator architecture.
+OpenClaw native multi-agent system for LMS.
 
-Architecture:
-  OrchestratorAgent (central coordinator)
-      |
-      +-- MonitoringAgent   – periodically analyses student performance,
-      |                       sends events to Orchestrator via asyncio Queue.
-      +-- AdaptationAgent   – generates AI-powered personalised
-      |                       recommendations on Orchestrator's command.
-      +-- NotificationAgent – persists alerts for teachers on
-                              Orchestrator's command.
+Each agent is a real OpenClaw LLM-powered entity registered in the local gateway.
+Python handles DB access and scheduling; OpenClaw agents handle reasoning and
+inter-agent coordination via the agentToAgent tool.
 
-All inter-agent communication goes through the OrchestratorAgent.
-Agents communicate via asyncio Queues — no XMPP server required.
-OpenClaw client connects to the local gateway (default: localhost:18789).
+Flow:
+  1. Python monitoring loop queries DB, finds at-risk students
+  2. Passes data to OpenClaw MonitoringAgent → agent reasons and routes to Orchestrator
+  3. OrchestratorAgent (in gateway) routes to Adaptation and Notification agents
+  4. AdaptationAgent generates recommendations via LLM
+  5. Python captures structured output and persists to DB
 """
 
 from __future__ import annotations
@@ -23,6 +20,8 @@ import json
 import logging
 from datetime import datetime, timedelta
 
+from openclaw import OpenClawClient
+
 import ai_service
 import config
 
@@ -30,10 +29,10 @@ log = logging.getLogger("lms.agents")
 
 
 # ---------------------------------------------------------------------------
-#  Helper: access the DB from inside an agent (needs Flask app context)
+#  Flask app context (set from run.py)
 # ---------------------------------------------------------------------------
 
-_flask_app = None  # will be set from run.py
+_flask_app = None
 
 
 def set_flask_app(app):
@@ -48,141 +47,193 @@ def _app_context():
 
 
 # ---------------------------------------------------------------------------
-#  Inter-agent message queues (replace XMPP transport)
-#  Initialised in start_agents() to bind to the correct event loop.
+#  OpenClaw client + agent handles
 # ---------------------------------------------------------------------------
 
-_orchestrator_queue: asyncio.Queue | None = None
-_adaptation_queue: asyncio.Queue | None = None
-_notification_queue: asyncio.Queue | None = None
-
-# OpenClaw client (optional — graceful fallback if gateway is not running)
-_openclaw_client = None
+_client: OpenClawClient | None = None
+_agents: dict = {}
 
 
-# ===================================================================
-#  OrchestratorAgent  (central coordinator)
-# ===================================================================
+# ---------------------------------------------------------------------------
+#  Agent SOUL definitions (instructions for each LLM-powered agent)
+# ---------------------------------------------------------------------------
 
-async def run_orchestrator():
-    """Central coordinator: routes events from all agents."""
-    log.info("[OrchestratorAgent] Starting …")
+_ORCHESTRATOR_SOUL = """\
+You are OrchestratorAgent — central coordinator of an LMS multi-agent learning system.
+
+Your only job is routing: you receive events and dispatch tasks to the right agents.
+
+Rules:
+- When you receive a student_risk event → send generate_recommendations to lms-adaptation
+  AND send create_alert to lms-notification (both, always).
+- When you receive recommendations_ready → log it and stop.
+- When you receive adaptation_analysis → log it and stop.
+- Never act on student data yourself. Never skip routing steps.
+
+Use agentToAgent for all inter-agent communication.
+Always include student_id and student_name in forwarded messages.
+"""
+
+_MONITORING_SOUL = """\
+You are MonitoringAgent — you detect at-risk students in an LMS system.
+
+When given a list of students with their scores:
+- Score below 50%: at risk, severity = "warning"
+- Score below 30%: critical, severity = "danger"
+
+For each at-risk student, send a student_risk event to lms-orchestrator via agentToAgent.
+
+Message format (JSON):
+{
+  "type": "student_risk",
+  "student_id": <id>,
+  "student_name": "<name>",
+  "score": <float>,
+  "severity": "warning" | "danger"
+}
+
+Send one message per at-risk student. If no students are at risk, respond with "No at-risk students found."
+"""
+
+_ADAPTATION_SOUL = """\
+You are AdaptationAgent — you generate personalized learning recommendations for students.
+
+When asked to generate recommendations for a student:
+1. Review the student's weak topics (score below threshold)
+2. For each weak topic, write a specific, encouraging, actionable recommendation
+3. Return recommendations as a JSON array:
+[
+  {"topic": "<topic_name>", "recommendation": "<text>", "priority": "high"|"medium"}
+]
+4. After generating, notify lms-orchestrator via agentToAgent:
+   {"type": "recommendations_ready", "student_id": <id>, "count": <n>}
+
+Keep recommendations concrete and motivating. Max 2-3 sentences per topic.
+"""
+
+_NOTIFICATION_SOUL = """\
+You are NotificationAgent — you create clear, professional alerts for teachers in an LMS.
+
+When you receive a create_alert task:
+1. Compose a concise teacher-facing alert message in Russian
+2. Include: student name, score percentage, severity level, suggested action
+3. Return the alert as JSON:
+   {"message": "<alert text>", "severity": "warning"|"danger"}
+4. Notify lms-orchestrator: {"type": "alert_created", "student_id": <id>}
+
+Keep messages professional, factual, and actionable. Do not alarm unnecessarily.
+"""
+
+
+# ---------------------------------------------------------------------------
+#  Agent lifecycle
+# ---------------------------------------------------------------------------
+
+_tasks: list[asyncio.Task] = []
+_AGENT_LOOPS = []
+
+
+async def start_agents():
+    """Register OpenClaw agents in gateway, start all agent loops."""
+    global _client, _agents, _tasks, _AGENT_LOOPS
+
+    _client = OpenClawClient(base_url=config.OPENCLAW_GATEWAY_URL)
+    log.info("[Agents] Connected to OpenClaw gateway at %s", config.OPENCLAW_GATEWAY_URL)
+
+    # Register all four agents in the OpenClaw gateway
+    _agents["orchestrator"] = _client.agents.create(
+        name="lms-orchestrator",
+        model="openrouter/auto",
+        description="Central coordinator — routes events between LMS agents",
+        soul=_ORCHESTRATOR_SOUL,
+        tools={
+            "agentToAgent": {
+                "enabled": True,
+                "allow": ["lms-adaptation", "lms-notification"],
+            }
+        },
+    )
+
+    _agents["monitoring"] = _client.agents.create(
+        name="lms-monitoring",
+        model="openrouter/auto",
+        description="Detects at-risk students and reports to orchestrator",
+        soul=_MONITORING_SOUL,
+        tools={
+            "agentToAgent": {
+                "enabled": True,
+                "allow": ["lms-orchestrator"],
+            }
+        },
+    )
+
+    _agents["adaptation"] = _client.agents.create(
+        name="lms-adaptation",
+        model="openrouter/auto",
+        description="Generates personalized learning recommendations",
+        soul=_ADAPTATION_SOUL,
+        tools={
+            "agentToAgent": {
+                "enabled": True,
+                "allow": ["lms-orchestrator"],
+            }
+        },
+    )
+
+    _agents["notification"] = _client.agents.create(
+        name="lms-notification",
+        model="openrouter/auto",
+        description="Creates teacher-visible alerts for at-risk students",
+        soul=_NOTIFICATION_SOUL,
+        tools={
+            "agentToAgent": {
+                "enabled": True,
+                "allow": ["lms-orchestrator"],
+            }
+        },
+    )
+
+    log.info("[Agents] All 4 OpenClaw agents registered in gateway.")
+
+    _AGENT_LOOPS = [
+        _monitoring_loop,
+        _adaptation_loop,
+        _orchestrator_heartbeat,
+        _notification_heartbeat,
+    ]
+    _tasks = [asyncio.ensure_future(fn()) for fn in _AGENT_LOOPS]
+    log.info("[Agents] Agent loops started.")
+
+
+async def watch_agents(check_interval: int = 30):
+    """Restart any agent loop that has unexpectedly stopped."""
     while True:
-        try:
-            data = await asyncio.wait_for(_orchestrator_queue.get(), timeout=10)
-        except asyncio.TimeoutError:
-            continue
-
-        event_type = data.get("type")
-        source = data.get("_source", "unknown")
-        log.info("[Orchestrator] Received event '%s' from %s", event_type, source)
-
-        _log_event(event_type, source, data)
-
-        if event_type == "student_risk":
-            await _handle_student_risk(data)
-        elif event_type == "recommendations_ready":
-            _handle_recommendations_ready(data)
-        elif event_type == "adaptation_analysis":
-            _handle_adaptation_analysis(data)
-        else:
-            log.info("[Orchestrator] Unknown event type '%s', ignoring.", event_type)
+        await asyncio.sleep(check_interval)
+        for i, task in enumerate(_tasks):
+            if task.done():
+                exc = task.exception() if not task.cancelled() else None
+                name = _AGENT_LOOPS[i].__name__
+                log.warning("[Agents] %s died (%s), restarting …", name, exc)
+                _tasks[i] = asyncio.ensure_future(_AGENT_LOOPS[i]())
 
 
-async def _handle_student_risk(data: dict):
-    student_id = data["student_id"]
-    student_name = data.get("student_name", "")
-    score = data.get("score", 0)
-    severity = data.get("severity", "warning")
-
-    _log_decision(
-        "student_risk", "monitoring", student_id,
-        f"Score={score}%, dispatching to adaptation and notification",
-    )
-
-    await _adaptation_queue.put({
-        "type": "generate_recommendations",
-        "student_id": student_id,
-        "student_name": student_name,
-        "score": score,
-    })
-
-    await _notification_queue.put({
-        "type": "create_alert",
-        "student_id": student_id,
-        "student_name": student_name,
-        "score": score,
-        "severity": severity,
-    })
+async def stop_agents():
+    """Cancel all running agent loops."""
+    for task in _tasks:
+        task.cancel()
+    await asyncio.gather(*_tasks, return_exceptions=True)
+    log.info("[Agents] All agents stopped.")
 
 
-def _handle_recommendations_ready(data: dict):
-    student_id = data.get("student_id")
-    count = data.get("recommendations_count", 0)
-    ai_used = data.get("ai_used", False)
+# ---------------------------------------------------------------------------
+#  MonitoringAgent loop
+#  Python queries DB → passes data to OpenClaw agent → agent reasons + routes
+# ---------------------------------------------------------------------------
 
-    _log_decision(
-        "recommendations_ready", "adaptation", student_id,
-        f"Generated {count} recommendations (AI={'yes' if ai_used else 'no'})",
-    )
-    log.info(
-        "[Orchestrator] %d recommendations ready for student %s (AI=%s)",
-        count, student_id, ai_used,
-    )
-
-
-def _handle_adaptation_analysis(data: dict):
-    student_id = data.get("student_id")
-    suggested = data.get("suggested_difficulty", 1)
-    _log_decision(
-        "adaptation_analysis", "adaptation", student_id,
-        f"Suggested difficulty={suggested}",
-    )
-
-
-def _log_event(event_type: str, source: str, data: dict):
-    try:
-        with _app_context():
-            from models import OrchestratorLog, db
-            entry = OrchestratorLog(
-                event_type=event_type or "unknown",
-                source_agent=source,
-                student_id=data.get("student_id"),
-                payload=json.dumps(data, ensure_ascii=False),
-            )
-            db.session.add(entry)
-            db.session.commit()
-    except Exception as exc:
-        log.error("[Orchestrator] Failed to log event: %s", exc)
-
-
-def _log_decision(event_type: str, target: str, student_id, decision: str):
-    try:
-        with _app_context():
-            from models import OrchestratorLog, db
-            entry = OrchestratorLog(
-                event_type=event_type,
-                source_agent="orchestrator",
-                target_agent=target,
-                student_id=student_id,
-                decision=decision,
-            )
-            db.session.add(entry)
-            db.session.commit()
-    except Exception as exc:
-        log.error("[Orchestrator] Failed to log decision: %s", exc)
-
-
-# ===================================================================
-#  MonitoringAgent
-# ===================================================================
-
-async def run_monitoring():
-    """Periodic monitoring loop: fires every MONITORING_PERIOD seconds."""
-    log.info("[MonitoringAgent] Starting …")
+async def _monitoring_loop():
+    log.info("[MonitoringAgent] Starting periodic loop (every %ds) …", config.MONITORING_PERIOD)
     while True:
         await asyncio.sleep(config.MONITORING_PERIOD)
-        log.info("[MonitoringAgent] Running monitoring cycle …")
         try:
             await _monitoring_cycle()
         except Exception as exc:
@@ -190,6 +241,8 @@ async def run_monitoring():
 
 
 async def _monitoring_cycle():
+    at_risk = []
+
     with _app_context():
         from models import AgentReport, StudentAnswer, User, db
 
@@ -202,13 +255,6 @@ async def _monitoring_cycle():
             total = len(answers)
             correct = sum(1 for a in answers if a.is_correct)
             score = round(correct / total * 100, 1)
-
-            recent_cutoff = datetime.utcnow() - timedelta(hours=24)
-            recent = [a for a in answers if a.created_at >= recent_cutoff]
-            recent_score = None
-            if recent:
-                recent_correct = sum(1 for a in recent if a.is_correct)
-                recent_score = round(recent_correct / len(recent) * 100, 1)
 
             if score >= config.RISK_SCORE_THRESHOLD:
                 continue
@@ -223,183 +269,57 @@ async def _monitoring_cycle():
                 continue
 
             severity = "danger" if score < 30 else "warning"
-            msg_text = (
-                f"Студент «{student.full_name or student.username}» "
-                f"имеет общий балл {score}% ({correct}/{total})."
-            )
-            if recent_score is not None:
-                msg_text += f" За последние 24 ч: {recent_score}%."
+            at_risk.append({
+                "student_id": student.id,
+                "student_name": student.full_name or student.username,
+                "score": score,
+                "severity": severity,
+            })
 
             db.session.add(AgentReport(
                 agent_type="monitoring",
                 student_id=student.id,
-                message=msg_text,
+                message=(
+                    f"Студент «{student.full_name or student.username}» "
+                    f"имеет балл {score}%."
+                ),
                 severity=severity,
             ))
 
-            await _orchestrator_queue.put({
-                "type": "student_risk",
-                "_source": "monitoring",
-                "student_id": student.id,
-                "student_name": student.full_name or student.username,
-                "score": score,
-                "recent_score": recent_score,
-                "severity": severity,
-            })
-
         db.session.commit()
-    log.info("[MonitoringAgent] Monitoring cycle complete.")
 
+    if not at_risk:
+        log.info("[MonitoringAgent] No at-risk students found.")
+        return
 
-# ===================================================================
-#  AdaptationAgent  (OpenClaw-powered)
-# ===================================================================
-
-async def run_adaptation():
-    """Adaptation agent: command listener + periodic proactive scan."""
-    log.info("[AdaptationAgent] Starting …")
-    listen_task = asyncio.ensure_future(_adaptation_listen_loop())
-    period_task = asyncio.ensure_future(_adaptation_periodic_loop())
-    await asyncio.gather(listen_task, period_task)
-
-
-async def _adaptation_listen_loop():
-    while True:
-        try:
-            data = await asyncio.wait_for(_adaptation_queue.get(), timeout=10)
-        except asyncio.TimeoutError:
-            continue
-
-        try:
-            if data.get("type") == "generate_recommendations":
-                await _generate_recommendations(data)
-            elif data.get("type") == "analyze_errors":
-                await _analyze_errors(data)
-        except Exception as exc:
-            log.error("[AdaptationAgent] Error processing task: %s", exc)
-
-
-async def _adaptation_periodic_loop():
-    while True:
-        await asyncio.sleep(config.ADAPTATION_PERIOD)
-        log.info("[AdaptationAgent] Running periodic adaptation scan …")
-        try:
-            await _periodic_adapt()
-        except Exception as exc:
-            log.error("[AdaptationAgent] Periodic scan error: %s", exc)
-
-
-async def _generate_recommendations(data: dict):
-    student_id = data["student_id"]
-    student_name = data.get("student_name", "")
-    score = data.get("score", 0)
-
-    log.info(
-        "[AdaptationAgent] Generating recommendations for student %s (score=%s%%)",
-        student_id, score,
+    # Hand off to OpenClaw MonitoringAgent for reasoning and routing
+    prompt = (
+        f"Student performance data for this monitoring cycle:\n"
+        f"{json.dumps(at_risk, ensure_ascii=False, indent=2)}\n\n"
+        f"Identify at-risk students and report each one to lms-orchestrator."
     )
 
-    recommendations_count = 0
-    ai_used = config.AI_ENABLED
-
-    with _app_context():
-        from models import AdaptationLog, StudentAnswer, Topic, db
-
-        answers = StudentAnswer.query.filter_by(student_id=student_id).all()
-        topic_stats: dict[int, dict] = {}
-        for a in answers:
-            t = topic_stats.setdefault(a.topic_id, {"total": 0, "correct": 0})
-            t["total"] += 1
-            t["correct"] += int(a.is_correct)
-
-        weak_topics = []
-        for tid, st in topic_stats.items():
-            pct = st["correct"] / st["total"] * 100 if st["total"] else 0
-            if pct < config.RISK_SCORE_THRESHOLD:
-                topic = Topic.query.get(tid)
-                if topic:
-                    weak_topics.append((topic, round(pct, 1), st["total"], st["correct"]))
-
-        if weak_topics:
-            for topic, pct, total, correct in weak_topics:
-                rec_text = ai_service.generate_recommendation(
-                    student_name=student_name,
-                    topic_title=topic.title,
-                    score_pct=pct,
-                    total_answers=total,
-                    correct_answers=correct,
-                )
-                db.session.add(AdaptationLog(
-                    student_id=student_id,
-                    topic_id=topic.id,
-                    recommendation=rec_text,
-                    ai_generated=ai_used,
-                ))
-                recommendations_count += 1
-        else:
-            if score < config.RISK_SCORE_THRESHOLD:
-                db.session.add(AdaptationLog(
-                    student_id=student_id,
-                    recommendation=ai_service.generate_recommendation(
-                        student_name=student_name,
-                        topic_title="общая программа",
-                        score_pct=score,
-                        total_answers=len(answers),
-                        correct_answers=sum(1 for a in answers if a.is_correct),
-                    ),
-                    ai_generated=ai_used,
-                ))
-                recommendations_count += 1
-
-        db.session.commit()
-
-    await _orchestrator_queue.put({
-        "type": "recommendations_ready",
-        "_source": "adaptation",
-        "student_id": student_id,
-        "recommendations_count": recommendations_count,
-        "ai_used": ai_used,
-    })
+    result = await asyncio.to_thread(_agents["monitoring"].run, prompt)
+    log.info("[MonitoringAgent] OpenClaw agent response: %s", result)
+    _log_orchestrator_event("monitoring_cycle", "monitoring", {"at_risk_count": len(at_risk)})
 
 
-async def _analyze_errors(data: dict):
-    student_id = data["student_id"]
-    student_name = data.get("student_name", "")
+# ---------------------------------------------------------------------------
+#  AdaptationAgent loop
+#  Periodic proactive scan — Python finds weak topics, OpenClaw agent generates recs
+# ---------------------------------------------------------------------------
 
-    log.info("[AdaptationAgent] Analysing error patterns for student %s", student_id)
-
-    with _app_context():
-        from models import StudentAnswer, Topic
-
-        answers = StudentAnswer.query.filter_by(student_id=student_id).all()
-        topic_stats: dict[int, dict] = {}
-        for a in answers:
-            t = topic_stats.setdefault(a.topic_id, {"total": 0, "correct": 0})
-            t["total"] += 1
-            t["correct"] += int(a.is_correct)
-
-        topic_results = []
-        for tid, st in topic_stats.items():
-            topic = Topic.query.get(tid)
-            pct = st["correct"] / st["total"] * 100 if st["total"] else 0
-            topic_results.append({
-                "topic_title": topic.title if topic else f"Topic {tid}",
-                "total": st["total"],
-                "correct": st["correct"],
-                "pct": round(pct, 1),
-            })
-
-    analysis = ai_service.analyze_error_patterns(student_name, topic_results)
-
-    await _orchestrator_queue.put({
-        "type": "adaptation_analysis",
-        "_source": "adaptation",
-        "student_id": student_id,
-        **analysis,
-    })
+async def _adaptation_loop():
+    log.info("[AdaptationAgent] Starting periodic loop (every %ds) …", config.ADAPTATION_PERIOD)
+    while True:
+        await asyncio.sleep(config.ADAPTATION_PERIOD)
+        try:
+            await _adaptation_cycle()
+        except Exception as exc:
+            log.error("[AdaptationAgent] Cycle error: %s", exc)
 
 
-async def _periodic_adapt():
+async def _adaptation_cycle():
     with _app_context():
         from models import AdaptationLog, StudentAnswer, Topic, User, db
 
@@ -415,6 +335,7 @@ async def _periodic_adapt():
                 t["total"] += 1
                 t["correct"] += int(a.is_correct)
 
+            weak_topics = []
             for tid, st in topic_stats.items():
                 pct = st["correct"] / st["total"] * 100 if st["total"] else 0
                 if pct >= config.RISK_SCORE_THRESHOLD:
@@ -430,115 +351,105 @@ async def _periodic_adapt():
                     continue
 
                 topic = Topic.query.get(tid)
-                if not topic:
-                    continue
+                if topic:
+                    weak_topics.append({
+                        "topic_id": tid,
+                        "topic_title": topic.title,
+                        "score": round(pct, 1),
+                        "total": st["total"],
+                        "correct": st["correct"],
+                    })
 
-                db.session.add(AdaptationLog(
-                    student_id=student.id,
-                    topic_id=topic.id,
-                    recommendation=ai_service.generate_recommendation(
+            if not weak_topics:
+                continue
+
+            # Ask OpenClaw AdaptationAgent to generate recommendations
+            prompt = (
+                f"Generate personalized recommendations for student "
+                f"«{student.full_name or student.username}» (id={student.id}).\n"
+                f"Weak topics:\n"
+                f"{json.dumps(weak_topics, ensure_ascii=False, indent=2)}"
+            )
+
+            result = await asyncio.to_thread(_agents["adaptation"].run, prompt)
+            log.info("[AdaptationAgent] Got recommendations for student %d", student.id)
+
+            # Parse recommendations from agent output and persist
+            recs = _extract_json_array(result)
+            if recs:
+                for rec in recs:
+                    topic = Topic.query.filter_by(title=rec.get("topic", "")).first()
+                    db.session.add(AdaptationLog(
+                        student_id=student.id,
+                        topic_id=topic.id if topic else None,
+                        recommendation=rec.get("recommendation", result),
+                        ai_generated=True,
+                    ))
+            else:
+                # Fallback: use ai_service directly
+                for wt in weak_topics:
+                    rec_text = ai_service.generate_recommendation(
                         student_name=student.full_name or student.username,
-                        topic_title=topic.title,
-                        score_pct=round(pct, 1),
-                        total_answers=st["total"],
-                        correct_answers=st["correct"],
-                    ),
-                    ai_generated=config.AI_ENABLED,
-                ))
+                        topic_title=wt["topic_title"],
+                        score_pct=wt["score"],
+                        total_answers=wt["total"],
+                        correct_answers=wt["correct"],
+                    )
+                    db.session.add(AdaptationLog(
+                        student_id=student.id,
+                        topic_id=wt["topic_id"],
+                        recommendation=rec_text,
+                        ai_generated=config.AI_ENABLED,
+                    ))
 
         db.session.commit()
-    log.info("[AdaptationAgent] Periodic adaptation scan complete.")
+    log.info("[AdaptationAgent] Proactive adaptation cycle complete.")
 
 
-# ===================================================================
-#  NotificationAgent
-# ===================================================================
+# ---------------------------------------------------------------------------
+#  Orchestrator and Notification heartbeat loops
+#  These agents live in the gateway and respond to agentToAgent messages.
+#  Python loops just keep them registered and restartable.
+# ---------------------------------------------------------------------------
 
-async def run_notification():
-    """Notification agent: persists teacher-visible alerts."""
-    log.info("[NotificationAgent] Starting …")
+async def _orchestrator_heartbeat():
+    """OrchestratorAgent lives in the gateway. This loop keeps it monitored."""
+    log.info("[OrchestratorAgent] Running in OpenClaw gateway (lms-orchestrator).")
     while True:
-        try:
-            data = await asyncio.wait_for(_notification_queue.get(), timeout=10)
-        except asyncio.TimeoutError:
-            continue
-
-        if data.get("type") != "create_alert":
-            continue
-
-        log.info(
-            "[NotificationAgent] Creating alert for student %s",
-            data.get("student_name"),
-        )
-
-        try:
-            with _app_context():
-                from models import AgentReport, db
-
-                db.session.add(AgentReport(
-                    agent_type="notification",
-                    student_id=data.get("student_id"),
-                    message=(
-                        f"Уведомление: студент «{data.get('student_name')}» "
-                        f"находится в зоне риска (балл: {data.get('score')}%)."
-                    ),
-                    severity=data.get("severity", "warning"),
-                ))
-                db.session.commit()
-        except Exception as exc:
-            log.error("[NotificationAgent] Failed to create alert: %s", exc)
+        await asyncio.sleep(60)
 
 
-# ===================================================================
-#  Lifecycle: start / watch / stop
-# ===================================================================
-
-_tasks: list[asyncio.Task] = []
-
-_AGENT_FACTORIES = [run_orchestrator, run_monitoring, run_adaptation, run_notification]
+async def _notification_heartbeat():
+    """NotificationAgent lives in the gateway. This loop keeps it monitored."""
+    log.info("[NotificationAgent] Running in OpenClaw gateway (lms-notification).")
+    while True:
+        await asyncio.sleep(60)
 
 
-async def start_agents():
-    """Initialise queues, connect OpenClaw client, start all agent coroutines."""
-    global _orchestrator_queue, _adaptation_queue, _notification_queue
-    global _tasks, _openclaw_client
+# ---------------------------------------------------------------------------
+#  Helpers
+# ---------------------------------------------------------------------------
 
-    _orchestrator_queue = asyncio.Queue()
-    _adaptation_queue = asyncio.Queue()
-    _notification_queue = asyncio.Queue()
-
-    # Try to connect to OpenClaw gateway (optional)
+def _extract_json_array(text: str) -> list | None:
+    """Extract the first JSON array found in agent output text."""
     try:
-        from openclaw import OpenClawClient
-        _openclaw_client = OpenClawClient(base_url=config.OPENCLAW_GATEWAY_URL)
-        log.info("[Agents] OpenClaw client connected to %s.", config.OPENCLAW_GATEWAY_URL)
+        start = text.index("[")
+        end = text.rindex("]") + 1
+        return json.loads(text[start:end])
+    except (ValueError, json.JSONDecodeError):
+        return None
+
+
+def _log_orchestrator_event(event_type: str, source: str, data: dict):
+    try:
+        with _app_context():
+            from models import OrchestratorLog, db
+            db.session.add(OrchestratorLog(
+                event_type=event_type,
+                source_agent=source,
+                student_id=data.get("student_id"),
+                payload=json.dumps(data, ensure_ascii=False),
+            ))
+            db.session.commit()
     except Exception as exc:
-        log.warning(
-            "[Agents] OpenClaw gateway not available (%s). "
-            "Agents will run in standalone asyncio mode.",
-            exc,
-        )
-
-    _tasks = [asyncio.ensure_future(fn()) for fn in _AGENT_FACTORIES]
-    log.info("[Agents] All 4 agents started (Orchestrator, Monitoring, Adaptation, Notification).")
-
-
-async def watch_agents(check_interval: int = 30):
-    """Restart any agent coroutine that has unexpectedly stopped."""
-    while True:
-        await asyncio.sleep(check_interval)
-        for i, task in enumerate(_tasks):
-            if task.done():
-                exc = task.exception() if not task.cancelled() else None
-                name = _AGENT_FACTORIES[i].__name__
-                log.warning("[Agents] %s died (%s), restarting …", name, exc)
-                _tasks[i] = asyncio.ensure_future(_AGENT_FACTORIES[i]())
-                log.info("[Agents] %s restarted.", name)
-
-
-async def stop_agents():
-    """Cancel all running agent tasks."""
-    for task in _tasks:
-        task.cancel()
-    await asyncio.gather(*_tasks, return_exceptions=True)
-    log.info("[Agents] All agents stopped.")
+        log.error("[Agents] Failed to log event: %s", exc)
