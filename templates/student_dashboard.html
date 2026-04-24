@@ -18,6 +18,9 @@
             </span>
         </a>
         <a href="{{ url_for('student_profile') }}" class="btn btn-sm btn-outline">Профиль</a>
+        <form method="post" action="{{ url_for('generate_student_recommendations') }}" style="display:inline;">
+            <button type="submit" class="btn btn-sm btn-primary">Получить рекомендации</button>
+        </form>
     </div>
     {% endif %}
 </div>

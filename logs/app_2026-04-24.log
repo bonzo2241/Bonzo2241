@@ -1,0 +1,1293 @@
+2026-04-24 22:29:02 | WARNING  | slixmpp.stringprep:114 - Using slower stringprep, consider compiling the faster cython/libidn one.
+2026-04-24 22:29:02 | INFO     | lms:73 - Flask web server started on port 5000.
+2026-04-24 22:29:02 | INFO     | lms:74 - Open http://localhost:5000 in your browser.
+2026-04-24 22:29:02 | INFO     | lms:90 - Starting SPADE agents …
+2026-04-24 22:29:03 | INFO     | slixmpp.features.feature_bind.bind:60 - JID set to: orchestrator@192.168.0.9/xV2eVpKJI1Eu
+2026-04-24 22:29:03 | INFO     | spade.Agent:194 - Agent orchestrator@192.168.0.9 connected and authenticated.
+2026-04-24 22:29:03 | INFO     | lms.agents:197 - [OrchestratorAgent] Starting …
+2026-04-24 22:29:03 | INFO     | lms.agents:576 - Agent orchestrator@192.168.0.9 started.
+2026-04-24 22:29:03 | INFO     | slixmpp.features.feature_bind.bind:60 - JID set to: monitoring@192.168.0.9/p7kc_CYdlDgE
+2026-04-24 22:29:03 | INFO     | spade.Agent:194 - Agent monitoring@192.168.0.9 connected and authenticated.
+2026-04-24 22:29:03 | INFO     | lms.agents:279 - [MonitoringAgent] Starting …
+2026-04-24 22:29:03 | INFO     | lms.agents:576 - Agent monitoring@192.168.0.9 started.
+2026-04-24 22:29:03 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:29:03 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:29:03 | INFO     | lms.agents:77 - [Orchestrator] Received event 'student_risk' from monitoring@192.168.0.9
+2026-04-24 22:29:03 | WARNING  | spade.Agent:402 - No behaviour matched for message: <message to="adaptation@192.168.0.9" from="orchestrator@192.168.0.9" thread="None" metadata={'performative': 'request'}>
+{"type": "generate_recommendations", "student_id": 10, "student_name": "\u0415\u0433\u043e\u0440\u043e\u0432\u0430 \u041c.\u0412.", "score": 40.0}
+</message>
+2026-04-24 22:29:03 | WARNING  | spade.Agent:402 - No behaviour matched for message: <message to="notification@192.168.0.9" from="orchestrator@192.168.0.9" thread="None" metadata={'performative': 'request'}>
+{"type": "create_alert", "student_id": 10, "student_name": "\u0415\u0433\u043e\u0440\u043e\u0432\u0430 \u041c.\u0412.", "score": 40.0, "severity": "warning"}
+</message>
+2026-04-24 22:29:03 | INFO     | lms.agents:77 - [Orchestrator] Received event 'student_risk' from monitoring@192.168.0.9
+2026-04-24 22:29:03 | WARNING  | spade.Agent:402 - No behaviour matched for message: <message to="adaptation@192.168.0.9" from="orchestrator@192.168.0.9" thread="None" metadata={'performative': 'request'}>
+{"type": "generate_recommendations", "student_id": 13, "student_name": "\u0411\u0435\u043b\u043e\u0432 \u0420.\u0414.", "score": 24.0}
+</message>
+2026-04-24 22:29:03 | WARNING  | spade.Agent:402 - No behaviour matched for message: <message to="notification@192.168.0.9" from="orchestrator@192.168.0.9" thread="None" metadata={'performative': 'request'}>
+{"type": "create_alert", "student_id": 13, "student_name": "\u0411\u0435\u043b\u043e\u0432 \u0420.\u0414.", "score": 24.0, "severity": "danger"}
+</message>
+2026-04-24 22:29:03 | INFO     | slixmpp.features.feature_bind.bind:60 - JID set to: adaptation@192.168.0.9/DD9qhlhQeWIL
+2026-04-24 22:29:03 | INFO     | spade.Agent:194 - Agent adaptation@192.168.0.9 connected and authenticated.
+2026-04-24 22:29:03 | INFO     | lms.agents:488 - [AdaptationAgent] Starting …
+2026-04-24 22:29:03 | INFO     | lms.agents:576 - Agent adaptation@192.168.0.9 started.
+2026-04-24 22:29:03 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-24 22:29:04 | INFO     | werkzeug:97 - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.3:5000
+2026-04-24 22:29:04 | INFO     | werkzeug:97 - [33mPress CTRL+C to quit[0m
+2026-04-24 22:29:05 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 22:29:08 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:29:08] "[32mGET / HTTP/1.1[0m" 302 -
+2026-04-24 22:29:08 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:29:08] "GET /student HTTP/1.1" 200 -
+2026-04-24 22:29:09 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:29:09] "GET /static/style.css HTTP/1.1" 200 -
+2026-04-24 22:29:10 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:29:10] "GET /student/chat HTTP/1.1" 200 -
+2026-04-24 22:29:10 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:29:10] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 22:29:11 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:29:11] "GET /student/chat?topic_id=3 HTTP/1.1" 200 -
+2026-04-24 22:29:11 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:29:11] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 22:29:13 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 22:29:19 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 22:29:25 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 22:29:33 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 22:29:41 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 403 Forbidden"
+2026-04-24 22:29:41 | WARNING  | lms.ai:89 - AI recommendation failed, using fallback: Error code: 403 - {'error': {'message': 'Provider returned error', 'code': 403, 'metadata': {'raw': 'Venice.ai is at capacity.', 'provider_name': 'Venice', 'is_byok': False}}, 'user_id': 'user_3AAWwdytToQEvDRHSqYEY0Udvxs'}
+2026-04-24 22:29:42 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 22:29:43 | ERROR    | app:1744 - Exception on /student/chat/send [POST]
+Traceback (most recent call last):
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\default.py", line 945, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: database is locked
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\flask\app.py", line 2529, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\flask\app.py", line 1825, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\flask\app.py", line 1823, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\flask\app.py", line 1799, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\bonzo\PycharmProjects\save\app.py", line 562, in wrapper
+    return f(*args, **kwargs)
+  File "C:\Users\bonzo\PycharmProjects\save\app.py", line 963, in student_chat_send
+    .all()
+     ~~~^^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2704, in all
+    return self._iter().all()  # type: ignore
+           ~~~~~~~~~~^^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2858, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+        params,
+        ^^^^^^^
+        execution_options={"_sa_orm_load_options": self.load_options},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2365, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2230, in _execute_internal
+    ) = compile_state_cls.orm_pre_session_exec(
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self,
+        ^^^^^
+    ...<4 lines>...
+        False,
+        ^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\context.py", line 577, in orm_pre_session_exec
+    session._autoflush()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 3065, in _autoflush
+    raise e.with_traceback(sys.exc_info()[2])
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 3054, in _autoflush
+    self.flush()
+    ~~~~~~~~~~^^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4353, in flush
+    self._flush(objects)
+    ~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4488, in _flush
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4449, in _flush
+    flush_context.execute()
+    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\unitofwork.py", line 466, in execute
+    rec.execute(self)
+    ~~~~~~~~~~~^^^^^^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self.mapper,
+        ^^^^^^^^^^^^
+        uow.states_for_mapper_hierarchy(self.mapper, False, False),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        uow,
+        ^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        base_mapper,
+        ^^^^^^^^^^^^
+    ...<3 lines>...
+        insert,
+        ^^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\persistence.py", line 1233, in _emit_insert_statements
+    result = connection.execute(
+        statement,
+        params,
+        execution_options=execution_options,
+    )
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1416, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\sql\elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1638, in _execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1843, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1983, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2352, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\default.py", line 945, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (raised as a result of Query-invoked autoflush; consider using a session.no_autoflush block if this flush is occurring prematurely)
+(sqlite3.OperationalError) database is locked
+[SQL: INSERT INTO chat_messages (student_id, topic_id, role, content, created_at) VALUES (?, ?, ?, ?, ?)]
+[parameters: (5, 3, 'user', 'тест', '2026-04-24 19:29:13.431023')]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-04-24 22:29:45 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:29:45] "[35m[1mPOST /student/chat/send HTTP/1.1[0m" 500 -
+2026-04-24 22:29:50 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 403 Forbidden"
+2026-04-24 22:29:50 | WARNING  | lms.ai:89 - AI recommendation failed, using fallback: Error code: 403 - {'error': {'message': 'Provider returned error', 'code': 403, 'metadata': {'raw': 'Venice.ai is at capacity.', 'provider_name': 'Venice', 'is_byok': False}}, 'user_id': 'user_3AAWwdytToQEvDRHSqYEY0Udvxs'}
+2026-04-24 22:29:52 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 22:29:56 | WARNING  | lms.ai:89 - AI recommendation failed, using fallback: LLM returned empty content (content is None)
+2026-04-24 22:29:58 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 22:30:01 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 22:30:05 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:30:05] "[32mGET / HTTP/1.1[0m" 302 -
+2026-04-24 22:30:05 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:30:05] "GET /student HTTP/1.1" 200 -
+2026-04-24 22:30:05 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:30:05] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 22:30:06 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:30:06] "GET /student/chat HTTP/1.1" 200 -
+2026-04-24 22:30:06 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:30:06] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 22:30:06 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:30:06] "GET /student/chat?topic_id=4 HTTP/1.1" 200 -
+2026-04-24 22:30:06 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:30:06] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 22:30:06 | ERROR    | app:1744 - Exception on /student/chat/send [POST]
+Traceback (most recent call last):
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\default.py", line 945, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: database is locked
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\flask\app.py", line 2529, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\flask\app.py", line 1825, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\flask\app.py", line 1823, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\flask\app.py", line 1799, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\bonzo\PycharmProjects\save\app.py", line 562, in wrapper
+    return f(*args, **kwargs)
+  File "C:\Users\bonzo\PycharmProjects\save\app.py", line 963, in student_chat_send
+    .all()
+     ~~~^^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2704, in all
+    return self._iter().all()  # type: ignore
+           ~~~~~~~~~~^^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2858, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+        params,
+        ^^^^^^^
+        execution_options={"_sa_orm_load_options": self.load_options},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2365, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2230, in _execute_internal
+    ) = compile_state_cls.orm_pre_session_exec(
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self,
+        ^^^^^
+    ...<4 lines>...
+        False,
+        ^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\context.py", line 577, in orm_pre_session_exec
+    session._autoflush()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 3065, in _autoflush
+    raise e.with_traceback(sys.exc_info()[2])
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 3054, in _autoflush
+    self.flush()
+    ~~~~~~~~~~^^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4353, in flush
+    self._flush(objects)
+    ~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4488, in _flush
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4449, in _flush
+    flush_context.execute()
+    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\unitofwork.py", line 466, in execute
+    rec.execute(self)
+    ~~~~~~~~~~~^^^^^^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self.mapper,
+        ^^^^^^^^^^^^
+        uow.states_for_mapper_hierarchy(self.mapper, False, False),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        uow,
+        ^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        base_mapper,
+        ^^^^^^^^^^^^
+    ...<3 lines>...
+        insert,
+        ^^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\persistence.py", line 1233, in _emit_insert_statements
+    result = connection.execute(
+        statement,
+        params,
+        execution_options=execution_options,
+    )
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1416, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\sql\elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1638, in _execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1843, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1983, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2352, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\default.py", line 945, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (raised as a result of Query-invoked autoflush; consider using a session.no_autoflush block if this flush is occurring prematurely)
+(sqlite3.OperationalError) database is locked
+[SQL: INSERT INTO chat_messages (student_id, topic_id, role, content, created_at) VALUES (?, ?, ?, ?, ?)]
+[parameters: (5, 3, 'user', 'тест', '2026-04-24 19:29:36.770603')]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-04-24 22:30:07 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 403 Forbidden"
+2026-04-24 22:30:09 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:30:09] "[35m[1mPOST /student/chat/send HTTP/1.1[0m" 500 -
+2026-04-24 22:30:09 | WARNING  | lms.ai:89 - AI recommendation failed, using fallback: Error code: 403 - {'error': {'message': 'Provider returned error', 'code': 403, 'metadata': {'raw': 'Venice.ai is at capacity.', 'provider_name': 'Venice', 'is_byok': False}}, 'user_id': 'user_3AAWwdytToQEvDRHSqYEY0Udvxs'}
+2026-04-24 22:30:11 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 22:30:15 | WARNING  | lms.ai:89 - AI recommendation failed, using fallback: LLM returned empty content (content is None)
+2026-04-24 22:30:16 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 22:30:21 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 22:30:40 | ERROR    | app:1744 - Exception on /student/chat/send [POST]
+Traceback (most recent call last):
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\default.py", line 945, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: database is locked
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\flask\app.py", line 2529, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\flask\app.py", line 1825, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\flask\app.py", line 1823, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\flask\app.py", line 1799, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\bonzo\PycharmProjects\save\app.py", line 562, in wrapper
+    return f(*args, **kwargs)
+  File "C:\Users\bonzo\PycharmProjects\save\app.py", line 963, in student_chat_send
+    .all()
+     ~~~^^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2704, in all
+    return self._iter().all()  # type: ignore
+           ~~~~~~~~~~^^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2858, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+        params,
+        ^^^^^^^
+        execution_options={"_sa_orm_load_options": self.load_options},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2365, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2230, in _execute_internal
+    ) = compile_state_cls.orm_pre_session_exec(
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self,
+        ^^^^^
+    ...<4 lines>...
+        False,
+        ^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\context.py", line 577, in orm_pre_session_exec
+    session._autoflush()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 3065, in _autoflush
+    raise e.with_traceback(sys.exc_info()[2])
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 3054, in _autoflush
+    self.flush()
+    ~~~~~~~~~~^^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4353, in flush
+    self._flush(objects)
+    ~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4488, in _flush
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4449, in _flush
+    flush_context.execute()
+    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\unitofwork.py", line 466, in execute
+    rec.execute(self)
+    ~~~~~~~~~~~^^^^^^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self.mapper,
+        ^^^^^^^^^^^^
+        uow.states_for_mapper_hierarchy(self.mapper, False, False),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        uow,
+        ^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        base_mapper,
+        ^^^^^^^^^^^^
+    ...<3 lines>...
+        insert,
+        ^^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\persistence.py", line 1233, in _emit_insert_statements
+    result = connection.execute(
+        statement,
+        params,
+        execution_options=execution_options,
+    )
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1416, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\sql\elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1638, in _execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1843, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1983, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2352, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\default.py", line 945, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (raised as a result of Query-invoked autoflush; consider using a session.no_autoflush block if this flush is occurring prematurely)
+(sqlite3.OperationalError) database is locked
+[SQL: INSERT INTO chat_messages (student_id, topic_id, role, content, created_at) VALUES (?, ?, ?, ?, ?)]
+[parameters: (5, 4, 'user', '1233', '2026-04-24 19:30:10.525944')]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-04-24 22:30:42 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:30:42] "[35m[1mPOST /student/chat/send HTTP/1.1[0m" 500 -
+2026-04-24 22:30:45 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:30:45] "GET /student/chat?topic_id=3 HTTP/1.1" 200 -
+2026-04-24 22:30:45 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:30:45] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 22:30:46 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 403 Forbidden"
+2026-04-24 22:30:46 | WARNING  | lms.ai:89 - AI recommendation failed, using fallback: Error code: 403 - {'error': {'message': 'Provider returned error', 'code': 403, 'metadata': {'raw': 'Venice.ai is at capacity.', 'provider_name': 'Venice', 'is_byok': False}}, 'user_id': 'user_3AAWwdytToQEvDRHSqYEY0Udvxs'}
+2026-04-24 22:30:46 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-24 22:30:46 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:30:46 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:30:46 | INFO     | slixmpp.features.feature_bind.bind:60 - JID set to: notification@192.168.0.9/IAEuKcNlEL1N
+2026-04-24 22:30:46 | INFO     | spade.Agent:194 - Agent notification@192.168.0.9 connected and authenticated.
+2026-04-24 22:30:46 | INFO     | lms.agents:536 - [NotificationAgent] Starting …
+2026-04-24 22:30:46 | INFO     | lms.agents:576 - Agent notification@192.168.0.9 started.
+2026-04-24 22:30:46 | INFO     | lms:92 - All agents are running. Press Ctrl+C to stop.
+2026-04-24 22:30:48 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 22:30:51 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:30:51] "[32mPOST /student/chat/send HTTP/1.1[0m" 302 -
+2026-04-24 22:30:52 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 22:30:54 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:30:54] "[32mPOST /student/chat/send HTTP/1.1[0m" 302 -
+2026-04-24 22:30:54 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:30:54] "GET /student/chat?topic_id=3 HTTP/1.1" 200 -
+2026-04-24 22:30:54 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:30:54] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 22:30:59 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 22:31:03 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:31:03 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:31:03 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-24 22:31:03 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-24 22:31:05 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:31:05] "[32mPOST /student/chat/send HTTP/1.1[0m" 302 -
+2026-04-24 22:31:05 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:31:05] "GET /student/chat?topic_id=3 HTTP/1.1" 200 -
+2026-04-24 22:31:05 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:31:05] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 22:31:23 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:31:23] "GET /student/chat?topic_id=1 HTTP/1.1" 200 -
+2026-04-24 22:31:23 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:31:23] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 22:31:25 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:31:25] "GET /student/chat?topic_id=4 HTTP/1.1" 200 -
+2026-04-24 22:31:25 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:31:25] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 22:31:33 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 22:31:33 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:31:33 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:31:48 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:31:48] "[32mPOST /student/chat/send HTTP/1.1[0m" 302 -
+2026-04-24 22:31:48 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:31:48] "GET /student/chat?topic_id=4 HTTP/1.1" 200 -
+2026-04-24 22:31:48 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:31:48] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 22:32:03 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:32:03 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:32:03 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-24 22:32:03 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-24 22:32:33 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:32:33 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:32:37 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:32:37] "GET /student/projects HTTP/1.1" 200 -
+2026-04-24 22:32:37 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:32:37] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 22:32:38 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:32:38] "GET /student/project/1 HTTP/1.1" 200 -
+2026-04-24 22:32:38 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:32:38] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 22:32:41 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:32:41] "[32mGET /logout HTTP/1.1[0m" 302 -
+2026-04-24 22:32:41 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:32:41] "GET /login HTTP/1.1" 200 -
+2026-04-24 22:32:41 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:32:41] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 22:32:46 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:32:46] "[32mPOST /login HTTP/1.1[0m" 302 -
+2026-04-24 22:32:46 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:32:46] "[32mGET / HTTP/1.1[0m" 302 -
+2026-04-24 22:32:46 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:32:46] "GET /teacher HTTP/1.1" 200 -
+2026-04-24 22:32:46 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:32:46] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 22:32:48 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:32:48] "GET /teacher/projects HTTP/1.1" 200 -
+2026-04-24 22:32:48 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:32:48] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 22:32:49 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:32:49] "GET /teacher/project/1 HTTP/1.1" 200 -
+2026-04-24 22:32:49 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:32:49] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 22:33:03 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:33:03 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:33:03 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-24 22:33:03 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-24 22:33:33 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:33:33 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:34:03 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:34:03 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:34:03 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-24 22:34:03 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-24 22:34:33 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:34:33 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:35:03 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:35:03 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:35:03 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-24 22:35:03 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-24 22:35:16 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:35:16] "GET /teacher HTTP/1.1" 200 -
+2026-04-24 22:35:16 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:35:16] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 22:35:33 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:35:33 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:36:03 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:36:03 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:36:03 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-24 22:36:03 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-24 22:36:21 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:36:21] "GET /teacher HTTP/1.1" 200 -
+2026-04-24 22:36:21 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:36:21] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 22:36:33 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:36:33 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:37:03 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:37:03 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:37:03 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-24 22:37:03 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-24 22:37:06 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:37:06] "GET /teacher/adaptations HTTP/1.1" 200 -
+2026-04-24 22:37:06 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:37:06] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 22:37:09 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:37:09] "[32mGET / HTTP/1.1[0m" 302 -
+2026-04-24 22:37:09 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:37:09] "GET /teacher HTTP/1.1" 200 -
+2026-04-24 22:37:09 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:37:09] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 22:37:10 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:37:10] "GET /teacher/adaptations HTTP/1.1" 200 -
+2026-04-24 22:37:10 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:37:10] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 22:37:33 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:37:33 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:37:58 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:37:58] "GET /teacher HTTP/1.1" 200 -
+2026-04-24 22:37:58 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:37:58] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 22:37:59 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:37:59] "[32mGET / HTTP/1.1[0m" 302 -
+2026-04-24 22:37:59 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:37:59] "GET /teacher HTTP/1.1" 200 -
+2026-04-24 22:37:59 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:37:59] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 22:38:03 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:38:03 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:38:03 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-24 22:38:03 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-24 22:38:05 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:38:05] "GET /teacher/adaptations HTTP/1.1" 200 -
+2026-04-24 22:38:05 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 22:38:05] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 22:38:33 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:38:33 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:39:03 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:39:03 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:39:03 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-24 22:39:03 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-24 22:39:33 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:39:33 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:40:03 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:40:03 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:40:03 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-24 22:40:03 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-24 22:40:33 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:40:33 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:41:03 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:41:03 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:41:03 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-24 22:41:03 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-24 22:41:33 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:41:33 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:42:03 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:42:03 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:42:03 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-24 22:42:03 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-24 22:42:33 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:42:33 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:43:03 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:43:03 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:43:03 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-24 22:43:03 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-24 22:43:33 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:43:33 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:44:03 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:44:03 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:44:03 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-24 22:44:03 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-24 22:44:33 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:44:33 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:45:03 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:45:03 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:45:03 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-24 22:45:03 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-24 22:45:33 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:45:33 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:46:03 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:46:03 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:46:03 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-24 22:46:03 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-24 22:46:33 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:46:33 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:47:03 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:47:03 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:47:03 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-24 22:47:03 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-24 22:47:33 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:47:33 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:48:03 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:48:03 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:48:03 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-24 22:48:03 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-24 22:48:33 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:48:33 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:49:03 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:49:03 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 22:49:03 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-24 22:49:03 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-24 22:49:33 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 22:49:33 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 23:46:35 | WARNING  | slixmpp.stringprep:114 - Using slower stringprep, consider compiling the faster cython/libidn one.
+2026-04-24 23:46:35 | INFO     | lms:73 - Flask web server started on port 5000.
+2026-04-24 23:46:35 | INFO     | lms:74 - Open http://localhost:5000 in your browser.
+2026-04-24 23:46:35 | INFO     | lms:90 - Starting SPADE agents …
+2026-04-24 23:46:35 | INFO     | slixmpp.features.feature_bind.bind:60 - JID set to: orchestrator@192.168.0.9/goh0c4P0H1IR
+2026-04-24 23:46:35 | INFO     | spade.Agent:194 - Agent orchestrator@192.168.0.9 connected and authenticated.
+2026-04-24 23:46:35 | INFO     | lms.agents:197 - [OrchestratorAgent] Starting …
+2026-04-24 23:46:35 | INFO     | lms.agents:576 - Agent orchestrator@192.168.0.9 started.
+2026-04-24 23:46:35 | INFO     | slixmpp.features.feature_bind.bind:60 - JID set to: monitoring@192.168.0.9/gtGkPc8EAGoB
+2026-04-24 23:46:35 | INFO     | spade.Agent:194 - Agent monitoring@192.168.0.9 connected and authenticated.
+2026-04-24 23:46:35 | INFO     | lms.agents:279 - [MonitoringAgent] Starting …
+2026-04-24 23:46:35 | INFO     | lms.agents:576 - Agent monitoring@192.168.0.9 started.
+2026-04-24 23:46:35 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 23:46:35 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 23:46:35 | INFO     | lms.agents:77 - [Orchestrator] Received event 'student_risk' from monitoring@192.168.0.9
+2026-04-24 23:46:35 | WARNING  | spade.Agent:402 - No behaviour matched for message: <message to="adaptation@192.168.0.9" from="orchestrator@192.168.0.9" thread="None" metadata={'performative': 'request'}>
+{"type": "generate_recommendations", "student_id": 6, "student_name": "\u0412\u043e\u043b\u043a\u043e\u0432\u0430 \u0415.\u0421.", "score": 40.0}
+</message>
+2026-04-24 23:46:35 | WARNING  | spade.Agent:402 - No behaviour matched for message: <message to="notification@192.168.0.9" from="orchestrator@192.168.0.9" thread="None" metadata={'performative': 'request'}>
+{"type": "create_alert", "student_id": 6, "student_name": "\u0412\u043e\u043b\u043a\u043e\u0432\u0430 \u0415.\u0421.", "score": 40.0, "severity": "warning"}
+</message>
+2026-04-24 23:46:35 | INFO     | lms.agents:77 - [Orchestrator] Received event 'student_risk' from monitoring@192.168.0.9
+2026-04-24 23:46:35 | WARNING  | spade.Agent:402 - No behaviour matched for message: <message to="adaptation@192.168.0.9" from="orchestrator@192.168.0.9" thread="None" metadata={'performative': 'request'}>
+{"type": "generate_recommendations", "student_id": 7, "student_name": "\u041c\u043e\u0440\u043e\u0437\u043e\u0432 \u0418.\u041a.", "score": 15.0}
+</message>
+2026-04-24 23:46:35 | WARNING  | spade.Agent:402 - No behaviour matched for message: <message to="notification@192.168.0.9" from="orchestrator@192.168.0.9" thread="None" metadata={'performative': 'request'}>
+{"type": "create_alert", "student_id": 7, "student_name": "\u041c\u043e\u0440\u043e\u0437\u043e\u0432 \u0418.\u041a.", "score": 15.0, "severity": "danger"}
+</message>
+2026-04-24 23:46:35 | INFO     | lms.agents:77 - [Orchestrator] Received event 'student_risk' from monitoring@192.168.0.9
+2026-04-24 23:46:35 | WARNING  | spade.Agent:402 - No behaviour matched for message: <message to="adaptation@192.168.0.9" from="orchestrator@192.168.0.9" thread="None" metadata={'performative': 'request'}>
+{"type": "generate_recommendations", "student_id": 11, "student_name": "\u041f\u0430\u0432\u043b\u043e\u0432 \u0421.\u041d.", "score": 45.0}
+</message>
+2026-04-24 23:46:35 | WARNING  | spade.Agent:402 - No behaviour matched for message: <message to="notification@192.168.0.9" from="orchestrator@192.168.0.9" thread="None" metadata={'performative': 'request'}>
+{"type": "create_alert", "student_id": 11, "student_name": "\u041f\u0430\u0432\u043b\u043e\u0432 \u0421.\u041d.", "score": 45.0, "severity": "warning"}
+</message>
+2026-04-24 23:46:35 | INFO     | lms.agents:77 - [Orchestrator] Received event 'student_risk' from monitoring@192.168.0.9
+2026-04-24 23:46:35 | WARNING  | spade.Agent:402 - No behaviour matched for message: <message to="adaptation@192.168.0.9" from="orchestrator@192.168.0.9" thread="None" metadata={'performative': 'request'}>
+{"type": "generate_recommendations", "student_id": 13, "student_name": "\u0411\u0435\u043b\u043e\u0432 \u0420.\u0414.", "score": 10.0}
+</message>
+2026-04-24 23:46:35 | WARNING  | spade.Agent:402 - No behaviour matched for message: <message to="notification@192.168.0.9" from="orchestrator@192.168.0.9" thread="None" metadata={'performative': 'request'}>
+{"type": "create_alert", "student_id": 13, "student_name": "\u0411\u0435\u043b\u043e\u0432 \u0420.\u0414.", "score": 10.0, "severity": "danger"}
+</message>
+2026-04-24 23:46:35 | INFO     | slixmpp.features.feature_bind.bind:60 - JID set to: adaptation@192.168.0.9/vHi3X83AnbQl
+2026-04-24 23:46:35 | INFO     | spade.Agent:194 - Agent adaptation@192.168.0.9 connected and authenticated.
+2026-04-24 23:46:35 | INFO     | lms.agents:488 - [AdaptationAgent] Starting …
+2026-04-24 23:46:35 | INFO     | lms.agents:576 - Agent adaptation@192.168.0.9 started.
+2026-04-24 23:46:35 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-24 23:46:36 | INFO     | werkzeug:97 - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.3:5000
+2026-04-24 23:46:36 | INFO     | werkzeug:97 - [33mPress CTRL+C to quit[0m
+2026-04-24 23:46:39 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 23:46:40 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:46:40] "[32mGET / HTTP/1.1[0m" 302 -
+2026-04-24 23:46:40 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:46:40] "GET /teacher HTTP/1.1" 200 -
+2026-04-24 23:46:40 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:46:40] "GET /static/style.css HTTP/1.1" 200 -
+2026-04-24 23:46:43 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:46:43] "GET /teacher/projects HTTP/1.1" 200 -
+2026-04-24 23:46:43 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:46:43] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 23:46:43 | WARNING  | lms.ai:89 - AI recommendation failed, using fallback: LLM returned empty content (content is None)
+2026-04-24 23:46:45 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-24 23:46:45 | INFO     | openai._base_client:1071 - Retrying request to /chat/completions in 0.440561 seconds
+2026-04-24 23:46:47 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 23:46:48 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:46:48] "GET /teacher/project/1 HTTP/1.1" 200 -
+2026-04-24 23:46:48 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:46:48] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 23:46:59 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:46:59] "GET /teacher/orchestrator HTTP/1.1" 200 -
+2026-04-24 23:46:59 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:46:59] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 23:46:59 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:46:59] "GET /teacher/projects HTTP/1.1" 200 -
+2026-04-24 23:46:59 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:46:59] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 23:47:00 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:47:00] "GET /teacher/adaptations HTTP/1.1" 200 -
+2026-04-24 23:47:00 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:47:00] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 23:47:02 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 23:47:06 | WARNING  | lms.ai:89 - AI recommendation failed, using fallback: LLM returned empty content (content is None)
+2026-04-24 23:47:08 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 23:47:11 | WARNING  | lms.ai:89 - AI recommendation failed, using fallback: LLM returned empty content (content is None)
+2026-04-24 23:47:13 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 23:47:22 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 23:47:28 | WARNING  | lms.ai:89 - AI recommendation failed, using fallback: LLM returned empty content (content is None)
+2026-04-24 23:47:30 | ERROR    | app:1744 - Exception on /teacher/reports [GET]
+Traceback (most recent call last):
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\default.py", line 945, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: database is locked
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\flask\app.py", line 2529, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\flask\app.py", line 1825, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\flask\app.py", line 1823, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\flask\app.py", line 1799, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\bonzo\PycharmProjects\MAS VKR\app.py", line 629, in wrapper
+    return f(*args, **kwargs)
+  File "C:\Users\bonzo\PycharmProjects\MAS VKR\app.py", line 906, in teacher_reports
+    AgentReport.query.filter_by(is_read=False).update({"is_read": True})
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\query.py", line 3300, in update
+    result: CursorResult[Any] = self.session.execute(
+                                ~~~~~~~~~~~~~~~~~~~~^
+        upd,
+        ^^^^
+    ...<3 lines>...
+        ),
+        ^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2365, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2251, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self,
+        ^^^^^
+    ...<4 lines>...
+        conn,
+        ^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\bulk_persistence.py", line 1648, in orm_execute_statement
+    return super().orm_execute_statement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        session,
+        ^^^^^^^^
+    ...<4 lines>...
+        conn,
+        ^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\orm\context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+        statement, params or {}, execution_options=execution_options
+    )
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1416, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\sql\elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1638, in _execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1843, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1983, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2352, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\bonzo\PycharmProjects\Bonzo2241\.venv\Lib\site-packages\sqlalchemy\engine\default.py", line 945, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) database is locked
+[SQL: UPDATE agent_reports SET is_read=? WHERE agent_reports.is_read = 0]
+[parameters: (1,)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-04-24 23:47:30 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 23:47:31 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:47:31] "[35m[1mGET /teacher/reports HTTP/1.1[0m" 500 -
+2026-04-24 23:47:36 | WARNING  | lms.ai:89 - AI recommendation failed, using fallback: LLM returned empty content (content is None)
+2026-04-24 23:47:37 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 23:47:42 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 23:47:48 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:47:48] "[32mGET /logout HTTP/1.1[0m" 302 -
+2026-04-24 23:47:48 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:47:48] "GET /login HTTP/1.1" 200 -
+2026-04-24 23:47:48 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:47:48] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 23:47:54 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:47:54] "POST /login HTTP/1.1" 200 -
+2026-04-24 23:47:54 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:47:54] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 23:48:01 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-24 23:48:01 | INFO     | openai._base_client:1071 - Retrying request to /chat/completions in 0.398659 seconds
+2026-04-24 23:48:03 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-24 23:48:03 | INFO     | openai._base_client:1071 - Retrying request to /chat/completions in 0.784840 seconds
+2026-04-24 23:48:04 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:48:04] "[32mPOST /login HTTP/1.1[0m" 302 -
+2026-04-24 23:48:04 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:48:04] "[32mGET / HTTP/1.1[0m" 302 -
+2026-04-24 23:48:04 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:48:04] "GET /student HTTP/1.1" 200 -
+2026-04-24 23:48:04 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:48:04] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 23:48:05 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 23:48:11 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 23:48:16 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 23:48:24 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 23:48:28 | WARNING  | lms.ai:89 - AI recommendation failed, using fallback: LLM returned empty content (content is None)
+2026-04-24 23:48:29 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-24 23:48:29 | INFO     | openai._base_client:1071 - Retrying request to /chat/completions in 0.398516 seconds
+2026-04-24 23:48:30 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-24 23:48:30 | INFO     | openai._base_client:1071 - Retrying request to /chat/completions in 0.989303 seconds
+2026-04-24 23:48:34 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 23:48:37 | WARNING  | lms.ai:89 - AI recommendation failed, using fallback: LLM returned empty content (content is None)
+2026-04-24 23:48:38 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 23:48:43 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 23:48:57 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 23:49:02 | WARNING  | lms.ai:89 - AI recommendation failed, using fallback: LLM returned empty content (content is None)
+2026-04-24 23:49:02 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-24 23:49:02 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 23:49:02 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 23:49:02 | INFO     | slixmpp.features.feature_bind.bind:60 - JID set to: notification@192.168.0.9/yD7fCRxAKQRu
+2026-04-24 23:49:02 | INFO     | spade.Agent:194 - Agent notification@192.168.0.9 connected and authenticated.
+2026-04-24 23:49:02 | INFO     | lms.agents:536 - [NotificationAgent] Starting …
+2026-04-24 23:49:02 | INFO     | lms.agents:576 - Agent notification@192.168.0.9 started.
+2026-04-24 23:49:02 | INFO     | lms:92 - All agents are running. Press Ctrl+C to stop.
+2026-04-24 23:49:05 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 23:49:05 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 23:49:35 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 23:49:35 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 23:49:35 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-24 23:49:35 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-24 23:50:05 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 23:50:05 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 23:50:35 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 23:50:35 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 23:50:35 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-24 23:50:35 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-24 23:51:05 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 23:51:05 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 23:51:35 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 23:51:35 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 23:51:35 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-24 23:51:35 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-24 23:52:01 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:52:01] "GET /student/chat HTTP/1.1" 200 -
+2026-04-24 23:52:01 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:52:01] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 23:52:02 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:52:02] "GET /student/chat?topic_id=3 HTTP/1.1" 200 -
+2026-04-24 23:52:02 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:52:02] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 23:52:05 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 23:52:05 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 23:52:05 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:52:05] "GET /student HTTP/1.1" 200 -
+2026-04-24 23:52:05 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:52:05] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 23:52:07 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:52:07] "GET /student/projects HTTP/1.1" 200 -
+2026-04-24 23:52:07 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:52:07] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 23:52:08 | INFO     | openai._base_client:1071 - Retrying request to /chat/completions in 0.463937 seconds
+2026-04-24 23:52:09 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:52:09] "GET /student/chat HTTP/1.1" 200 -
+2026-04-24 23:52:09 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:52:09] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 23:52:09 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:52:09] "GET /student/chat?topic_id=4 HTTP/1.1" 200 -
+2026-04-24 23:52:09 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:52:09] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 23:52:12 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 23:52:16 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:52:16] "[32mPOST /student/chat/send HTTP/1.1[0m" 302 -
+2026-04-24 23:52:17 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 23:52:18 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:52:18] "[32mPOST /student/chat/send HTTP/1.1[0m" 302 -
+2026-04-24 23:52:19 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 23:52:21 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:52:21] "[32mPOST /student/chat/send HTTP/1.1[0m" 302 -
+2026-04-24 23:52:21 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:52:21] "GET /student/chat?topic_id=4 HTTP/1.1" 200 -
+2026-04-24 23:52:21 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:52:21] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 23:52:23 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 23:52:25 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:52:25] "[32mPOST /student/chat/send HTTP/1.1[0m" 302 -
+2026-04-24 23:52:34 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 23:52:35 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 23:52:35 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 23:52:35 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-24 23:52:35 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-24 23:52:42 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:52:42] "[32mPOST /student/chat/send HTTP/1.1[0m" 302 -
+2026-04-24 23:52:44 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 23:52:52 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:52:52] "[32mPOST /student/chat/send HTTP/1.1[0m" 302 -
+2026-04-24 23:52:52 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:52:52] "GET /student/chat?topic_id=4 HTTP/1.1" 200 -
+2026-04-24 23:52:52 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:52:52] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 23:53:05 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 23:53:05 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 23:53:35 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 23:53:35 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 23:53:35 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 23:53:35 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-24 23:53:35 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-24 23:53:52 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:53:52] "[32mPOST /student/chat/send HTTP/1.1[0m" 302 -
+2026-04-24 23:53:52 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:53:52] "GET /student/chat?topic_id=4 HTTP/1.1" 200 -
+2026-04-24 23:53:52 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:53:52] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 23:54:05 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 23:54:05 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 23:54:35 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 23:54:35 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 23:54:35 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-24 23:54:35 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-24 23:54:54 | INFO     | openai._base_client:1071 - Retrying request to /chat/completions in 0.439505 seconds
+2026-04-24 23:54:59 | INFO     | openai._base_client:1071 - Retrying request to /chat/completions in 0.928329 seconds
+2026-04-24 23:55:05 | WARNING  | lms.ai:293 - AI chat failed, using fallback: Request timed out.
+2026-04-24 23:55:05 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:55:05] "[32mPOST /student/chat/send HTTP/1.1[0m" 302 -
+2026-04-24 23:55:05 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:55:05] "GET /student/chat?topic_id=4 HTTP/1.1" 200 -
+2026-04-24 23:55:05 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:55:05] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 23:55:05 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 23:55:05 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 23:55:35 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 23:55:35 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 23:55:35 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-24 23:55:35 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-24 23:55:39 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 23:55:44 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:55:44] "[32mPOST /student/chat/send HTTP/1.1[0m" 302 -
+2026-04-24 23:55:44 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:55:44] "GET /student/chat?topic_id=4 HTTP/1.1" 200 -
+2026-04-24 23:55:44 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:55:44] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 23:55:54 | INFO     | openai._base_client:1071 - Retrying request to /chat/completions in 0.383318 seconds
+2026-04-24 23:55:58 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 23:56:05 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 23:56:05 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 23:56:07 | WARNING  | lms.ai:293 - AI chat failed, using fallback: LLM returned empty content (content is None)
+2026-04-24 23:56:08 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:56:08] "[32mPOST /student/chat/send HTTP/1.1[0m" 302 -
+2026-04-24 23:56:08 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:56:08] "GET /student/chat?topic_id=4 HTTP/1.1" 200 -
+2026-04-24 23:56:08 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:56:08] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 23:56:13 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-24 23:56:19 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:56:19] "[32mPOST /student/chat/send HTTP/1.1[0m" 302 -
+2026-04-24 23:56:19 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:56:19] "GET /student/chat?topic_id=4 HTTP/1.1" 200 -
+2026-04-24 23:56:19 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:56:19] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 23:56:35 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 23:56:35 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 23:56:35 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-24 23:56:35 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-24 23:56:52 | INFO     | lms:81 - Shutting down agents …
+2026-04-24 23:56:52 | ERROR    | lms:98 - SPADE agents failed: This event loop is already running
+2026-04-24 23:56:52 | INFO     | lms:99 - Web server continues running without agents on port 5000.
+2026-04-24 23:56:52 | INFO     | lms:100 - Restart with --web-only to suppress this, or fix the XMPP server.
+2026-04-24 23:59:22 | WARNING  | slixmpp.stringprep:114 - Using slower stringprep, consider compiling the faster cython/libidn one.
+2026-04-24 23:59:22 | INFO     | lms:73 - Flask web server started on port 5000.
+2026-04-24 23:59:22 | INFO     | lms:74 - Open http://localhost:5000 in your browser.
+2026-04-24 23:59:22 | INFO     | lms:90 - Starting SPADE agents …
+2026-04-24 23:59:22 | INFO     | slixmpp.features.feature_bind.bind:60 - JID set to: orchestrator@192.168.0.9/lCRHMtpl-Z3w
+2026-04-24 23:59:22 | INFO     | spade.Agent:194 - Agent orchestrator@192.168.0.9 connected and authenticated.
+2026-04-24 23:59:22 | INFO     | lms.agents:197 - [OrchestratorAgent] Starting …
+2026-04-24 23:59:22 | INFO     | lms.agents:576 - Agent orchestrator@192.168.0.9 started.
+2026-04-24 23:59:22 | INFO     | slixmpp.features.feature_bind.bind:60 - JID set to: monitoring@192.168.0.9/L9kg-Nqw8VED
+2026-04-24 23:59:22 | INFO     | spade.Agent:194 - Agent monitoring@192.168.0.9 connected and authenticated.
+2026-04-24 23:59:22 | INFO     | lms.agents:279 - [MonitoringAgent] Starting …
+2026-04-24 23:59:22 | INFO     | lms.agents:576 - Agent monitoring@192.168.0.9 started.
+2026-04-24 23:59:22 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 23:59:22 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 23:59:22 | INFO     | slixmpp.features.feature_bind.bind:60 - JID set to: adaptation@192.168.0.9/A6YigPzajoae
+2026-04-24 23:59:22 | INFO     | spade.Agent:194 - Agent adaptation@192.168.0.9 connected and authenticated.
+2026-04-24 23:59:22 | INFO     | lms.agents:488 - [AdaptationAgent] Starting …
+2026-04-24 23:59:22 | INFO     | lms.agents:576 - Agent adaptation@192.168.0.9 started.
+2026-04-24 23:59:22 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-24 23:59:22 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-24 23:59:23 | INFO     | slixmpp.features.feature_bind.bind:60 - JID set to: notification@192.168.0.9/DWRrFUQdU13U
+2026-04-24 23:59:23 | INFO     | spade.Agent:194 - Agent notification@192.168.0.9 connected and authenticated.
+2026-04-24 23:59:23 | INFO     | lms.agents:536 - [NotificationAgent] Starting …
+2026-04-24 23:59:23 | INFO     | lms.agents:576 - Agent notification@192.168.0.9 started.
+2026-04-24 23:59:23 | INFO     | lms:92 - All agents are running. Press Ctrl+C to stop.
+2026-04-24 23:59:23 | INFO     | werkzeug:97 - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.3:5000
+2026-04-24 23:59:23 | INFO     | werkzeug:97 - [33mPress CTRL+C to quit[0m
+2026-04-24 23:59:25 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:59:25] "[32mGET / HTTP/1.1[0m" 302 -
+2026-04-24 23:59:25 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:59:25] "GET /student HTTP/1.1" 200 -
+2026-04-24 23:59:25 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:59:25] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 23:59:32 | INFO     | openai._base_client:1071 - Retrying request to /chat/completions in 0.451971 seconds
+2026-04-24 23:59:38 | INFO     | openai._base_client:1071 - Retrying request to /chat/completions in 0.901517 seconds
+2026-04-24 23:59:44 | WARNING  | lms.ai:89 - AI recommendation failed, using fallback: Request timed out.
+2026-04-24 23:59:48 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:59:48] "GET /student/profile HTTP/1.1" 200 -
+2026-04-24 23:59:48 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:59:48] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 23:59:49 | INFO     | openai._base_client:1071 - Retrying request to /chat/completions in 0.443660 seconds
+2026-04-24 23:59:52 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-24 23:59:52 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-24 23:59:53 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:59:53] "[32mGET / HTTP/1.1[0m" 302 -
+2026-04-24 23:59:53 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:59:53] "GET /student HTTP/1.1" 200 -
+2026-04-24 23:59:53 | INFO     | werkzeug:97 - 192.168.0.3 - - [24/Apr/2026 23:59:53] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-24 23:59:54 | INFO     | openai._base_client:1071 - Retrying request to /chat/completions in 0.875893 seconds
+2026-04-24 23:59:57 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-25 00:00:03 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-25 00:00:04 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:00:04] "[32mPOST /student/recommendations/generate HTTP/1.1[0m" 302 -
+2026-04-25 00:00:10 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-25 00:00:10 | INFO     | openai._base_client:1071 - Retrying request to /chat/completions in 0.463057 seconds
+2026-04-25 00:00:11 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-25 00:00:19 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:00:19] "GET /student/profile HTTP/1.1" 200 -
+2026-04-25 00:00:19 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:00:19] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-25 00:00:22 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-25 00:00:22 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-25 00:00:22 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-25 00:00:22 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-25 00:00:23 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:00:23] "[32mPOST /student/recommendations/generate HTTP/1.1[0m" 302 -
+2026-04-25 00:00:36 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:00:36] "[32mGET / HTTP/1.1[0m" 302 -
+2026-04-25 00:00:36 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:00:36] "GET /student HTTP/1.1" 200 -
+2026-04-25 00:00:36 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:00:36] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-25 00:00:47 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-25 00:00:47 | INFO     | openai._base_client:1071 - Retrying request to /chat/completions in 0.386274 seconds
+2026-04-25 00:00:48 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-25 00:00:52 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-25 00:00:52 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-25 00:00:55 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-25 00:01:05 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:01:05] "GET /student/projects HTTP/1.1" 200 -
+2026-04-25 00:01:05 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:01:05] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-25 00:01:06 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:01:06] "GET /student HTTP/1.1" 200 -
+2026-04-25 00:01:06 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:01:06] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-25 00:01:08 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:01:08] "GET /student HTTP/1.1" 200 -
+2026-04-25 00:01:08 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:01:08] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-25 00:01:12 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-25 00:01:19 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-25 00:01:19 | INFO     | openai._base_client:1071 - Retrying request to /chat/completions in 0.392700 seconds
+2026-04-25 00:01:20 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-25 00:01:21 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:01:21] "GET /student/projects HTTP/1.1" 200 -
+2026-04-25 00:01:21 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:01:21] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-25 00:01:21 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:01:21] "[32mPOST /student/recommendations/generate HTTP/1.1[0m" 302 -
+2026-04-25 00:01:22 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-25 00:01:22 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-25 00:01:22 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-25 00:01:22 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-25 00:01:22 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:01:22] "GET /student HTTP/1.1" 200 -
+2026-04-25 00:01:22 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:01:22] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-25 00:01:29 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:01:29] "[32mPOST /student/recommendations/generate HTTP/1.1[0m" 302 -
+2026-04-25 00:01:52 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-25 00:01:52 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-25 00:02:13 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:02:13] "[32mPOST /student/recommendation/73/interact HTTP/1.1[0m" 302 -
+2026-04-25 00:02:13 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:02:13] "GET /student HTTP/1.1" 200 -
+2026-04-25 00:02:13 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:02:13] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-25 00:02:15 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:02:15] "GET /student/profile HTTP/1.1" 200 -
+2026-04-25 00:02:15 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:02:15] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-25 00:02:18 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:02:18] "[32mGET / HTTP/1.1[0m" 302 -
+2026-04-25 00:02:18 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:02:18] "GET /student HTTP/1.1" 200 -
+2026-04-25 00:02:18 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:02:18] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-25 00:02:22 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-25 00:02:22 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-25 00:02:22 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-25 00:02:22 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-25 00:02:52 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-25 00:02:52 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-25 00:03:02 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:03:02] "GET /student HTTP/1.1" 200 -
+2026-04-25 00:03:02 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:03:02] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-25 00:03:06 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:03:06] "GET /student HTTP/1.1" 200 -
+2026-04-25 00:03:06 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:03:06] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-25 00:03:11 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:03:11] "GET /student/projects HTTP/1.1" 200 -
+2026-04-25 00:03:11 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:03:11] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-25 00:03:12 | INFO     | openai._base_client:1071 - Retrying request to /chat/completions in 0.476648 seconds
+2026-04-25 00:03:15 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:03:15] "GET /student/project/2 HTTP/1.1" 200 -
+2026-04-25 00:03:15 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:03:15] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-25 00:03:16 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-25 00:03:22 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-25 00:03:22 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-25 00:03:22 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-25 00:03:22 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-25 00:03:24 | WARNING  | lms.ai:89 - AI recommendation failed, using fallback: LLM returned empty content (content is None)
+2026-04-25 00:03:24 | INFO     | httpx:1025 - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-25 00:03:32 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:03:32] "[32mPOST /student/recommendations/generate HTTP/1.1[0m" 302 -
+2026-04-25 00:03:34 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:03:34] "[32mGET / HTTP/1.1[0m" 302 -
+2026-04-25 00:03:34 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:03:34] "GET /student HTTP/1.1" 200 -
+2026-04-25 00:03:34 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:03:34] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-25 00:03:37 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:03:37] "[32mGET /logout HTTP/1.1[0m" 302 -
+2026-04-25 00:03:37 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:03:37] "GET /login HTTP/1.1" 200 -
+2026-04-25 00:03:37 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:03:37] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-25 00:03:42 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:03:42] "[32mPOST /login HTTP/1.1[0m" 302 -
+2026-04-25 00:03:43 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:03:43] "[32mGET / HTTP/1.1[0m" 302 -
+2026-04-25 00:03:43 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:03:43] "GET /teacher HTTP/1.1" 200 -
+2026-04-25 00:03:43 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:03:43] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-25 00:03:45 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:03:45] "GET /teacher/projects HTTP/1.1" 200 -
+2026-04-25 00:03:45 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:03:45] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-25 00:03:47 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:03:47] "GET /teacher/project/4 HTTP/1.1" 200 -
+2026-04-25 00:03:47 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:03:47] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-25 00:03:49 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:03:49] "GET /teacher/project/2 HTTP/1.1" 200 -
+2026-04-25 00:03:49 | INFO     | werkzeug:97 - 192.168.0.3 - - [25/Apr/2026 00:03:49] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2026-04-25 00:03:52 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-25 00:03:52 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-25 00:04:22 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-25 00:04:22 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-25 00:04:22 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-25 00:04:22 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-25 00:04:52 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-25 00:04:52 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-25 00:05:22 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-25 00:05:22 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-25 00:05:22 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-25 00:05:22 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-25 00:05:52 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-25 00:05:52 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-25 00:06:22 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-25 00:06:22 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-25 00:06:22 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-25 00:06:22 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-25 00:06:52 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-25 00:06:52 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-25 00:07:22 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-25 00:07:22 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-25 00:07:22 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-25 00:07:22 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-25 00:07:52 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-25 00:07:52 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-25 00:08:22 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-25 00:08:22 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-25 00:08:22 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-25 00:08:22 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-25 00:08:52 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-25 00:08:52 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-25 00:09:22 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-25 00:09:22 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-25 00:09:22 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-25 00:09:22 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-25 00:09:52 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-25 00:09:52 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-25 00:10:22 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-25 00:10:22 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-25 00:10:22 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-25 00:10:22 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-25 00:10:52 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-25 00:10:52 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-25 00:11:22 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-25 00:11:22 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-25 00:11:22 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-25 00:11:22 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-25 00:11:52 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-25 00:11:52 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-25 00:12:22 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-25 00:12:22 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-25 00:12:22 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-25 00:12:22 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-25 00:12:52 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-25 00:12:52 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-25 00:13:22 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-25 00:13:22 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-25 00:13:22 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-25 00:13:22 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.
+2026-04-25 00:13:52 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-25 00:13:52 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-25 00:14:22 | INFO     | lms.agents:211 - [MonitoringAgent] Running monitoring cycle …
+2026-04-25 00:14:22 | INFO     | lms.agents:276 - [MonitoringAgent] Monitoring cycle complete.
+2026-04-25 00:14:22 | INFO     | lms.agents:435 - [AdaptationAgent] Running periodic adaptation scan …
+2026-04-25 00:14:22 | INFO     | lms.agents:485 - [AdaptationAgent] Periodic adaptation scan complete.

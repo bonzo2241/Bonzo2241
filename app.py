@@ -736,6 +736,59 @@ def _register_routes(app: Flask):
             profile=profile,
         )
 
+    @app.route("/student/recommendations/generate", methods=["POST"])
+    @login_required
+    def generate_student_recommendations():
+        """Debug endpoint: manually ask AI/fallback for fresh recommendations."""
+        student_id = session["user_id"]
+        student = User.query.get_or_404(student_id)
+        topics = Topic.query.order_by(Topic.created_at.desc()).all()
+
+        topic_results = []
+        for topic in topics:
+            answers = StudentAnswer.query.filter_by(
+                student_id=student_id,
+                topic_id=topic.id,
+            ).all()
+            if not answers:
+                continue
+            total = len(answers)
+            correct = sum(1 for answer in answers if answer.is_correct)
+            pct = round(correct / total * 100, 1)
+            topic_results.append((topic, pct, total, correct))
+
+        if not topic_results:
+            flash("Пока нет ответов для анализа. Сначала пройдите хотя бы один тест.", "warning")
+            return redirect(url_for("student_dashboard"))
+
+        weak_topics = [
+            result for result in topic_results
+            if result[1] < config.RISK_SCORE_THRESHOLD
+        ]
+        targets = weak_topics or [min(topic_results, key=lambda result: result[1])]
+
+        created_count = 0
+        for topic, pct, total, correct in targets:
+            rec_text = ai_service.generate_recommendation(
+                student_name=student.full_name or student.username,
+                topic_title=topic.title,
+                score_pct=pct,
+                total_answers=total,
+                correct_answers=correct,
+            )
+            db.session.add(AdaptationLog(
+                student_id=student_id,
+                topic_id=topic.id,
+                recommendation=rec_text,
+                ai_generated=config.AI_ENABLED,
+            ))
+            created_count += 1
+
+        db.session.commit()
+        source = "AI" if config.AI_ENABLED else "fallback"
+        flash(f"Сгенерировано рекомендаций: {created_count} ({source}).", "success")
+        return redirect(url_for("student_dashboard"))
+
     @app.route("/topic/<int:topic_id>")
     @login_required
     def view_topic(topic_id: int):

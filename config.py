@@ -13,7 +13,7 @@ SQLALCHEMY_ENGINE_OPTIONS = {
 }
 
 # XMPP server (Prosody / ejabberd / any XMPP-compliant server)
-XMPP_SERVER = os.environ.get("XMPP_SERVER", "localhost")
+XMPP_SERVER = os.environ.get("XMPP_SERVER", "192.168.0.9")
 
 XMPP_AGENTS = {
     "orchestrator": {
@@ -41,7 +41,7 @@ ADAPTATION_PERIOD = 60             # seconds between adaptation cycles
 
 # AI / LLM settings (OpenRouter — OpenAI-compatible API)
 # Получить ключ: https://openrouter.ai/keys
-AI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+AI_API_KEY = os.environ.get("OPENAI_API_KEY", "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")
 AI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "https://openrouter.ai/api/v1")
 AI_MODEL = os.environ.get("AI_MODEL", "openrouter/free")
 AI_ENABLED = bool(AI_API_KEY)
