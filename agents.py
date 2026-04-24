@@ -25,6 +25,15 @@ from datetime import datetime, timedelta
 
 import ai_service
 import config
+from agent_transport import LocalQueueTransport, OpenClawTransport
+from contracts.events import (
+    CMD_ANALYZE_ERRORS,
+    CMD_CREATE_ALERT,
+    CMD_GENERATE_RECOMMENDATIONS,
+    EVENT_ADAPTATION_ANALYSIS,
+    EVENT_RECOMMENDATIONS_READY,
+    EVENT_STUDENT_RISK,
+)
 
 log = logging.getLogger("lms.agents")
 
@@ -48,16 +57,18 @@ def _app_context():
 
 
 # ---------------------------------------------------------------------------
-#  Inter-agent message queues (replace XMPP transport)
-#  Initialised in start_agents() to bind to the correct event loop.
+#  Inter-agent transport
 # ---------------------------------------------------------------------------
 
-_orchestrator_queue: asyncio.Queue | None = None
-_adaptation_queue: asyncio.Queue | None = None
-_notification_queue: asyncio.Queue | None = None
+_transport = None
 
-# OpenClaw client (optional — graceful fallback if gateway is not running)
+# OpenClaw client is owned by OpenClawTransport when enabled.
 _openclaw_client = None
+
+_CHANNEL_ORCHESTRATOR = "orchestrator"
+_CHANNEL_ADAPTATION = "adaptation"
+_CHANNEL_NOTIFICATION = "notification"
+_CHANNELS = [_CHANNEL_ORCHESTRATOR, _CHANNEL_ADAPTATION, _CHANNEL_NOTIFICATION]
 
 
 # ===================================================================
@@ -68,9 +79,8 @@ async def run_orchestrator():
     """Central coordinator: routes events from all agents."""
     log.info("[OrchestratorAgent] Starting …")
     while True:
-        try:
-            data = await asyncio.wait_for(_orchestrator_queue.get(), timeout=10)
-        except asyncio.TimeoutError:
+        data = await _transport.recv(_CHANNEL_ORCHESTRATOR, timeout=10)
+        if data is None:
             continue
 
         event_type = data.get("type")
@@ -79,11 +89,11 @@ async def run_orchestrator():
 
         _log_event(event_type, source, data)
 
-        if event_type == "student_risk":
+        if event_type == EVENT_STUDENT_RISK:
             await _handle_student_risk(data)
-        elif event_type == "recommendations_ready":
+        elif event_type == EVENT_RECOMMENDATIONS_READY:
             _handle_recommendations_ready(data)
-        elif event_type == "adaptation_analysis":
+        elif event_type == EVENT_ADAPTATION_ANALYSIS:
             _handle_adaptation_analysis(data)
         else:
             log.info("[Orchestrator] Unknown event type '%s', ignoring.", event_type)
@@ -100,15 +110,15 @@ async def _handle_student_risk(data: dict):
         f"Score={score}%, dispatching to adaptation and notification",
     )
 
-    await _adaptation_queue.put({
-        "type": "generate_recommendations",
+    await _transport.send(_CHANNEL_ADAPTATION, {
+        "type": CMD_GENERATE_RECOMMENDATIONS,
         "student_id": student_id,
         "student_name": student_name,
         "score": score,
     })
 
-    await _notification_queue.put({
-        "type": "create_alert",
+    await _transport.send(_CHANNEL_NOTIFICATION, {
+        "type": CMD_CREATE_ALERT,
         "student_id": student_id,
         "student_name": student_name,
         "score": score,
@@ -237,8 +247,8 @@ async def _monitoring_cycle():
                 severity=severity,
             ))
 
-            await _orchestrator_queue.put({
-                "type": "student_risk",
+            await _transport.send(_CHANNEL_ORCHESTRATOR, {
+                "type": EVENT_STUDENT_RISK,
                 "_source": "monitoring",
                 "student_id": student.id,
                 "student_name": student.full_name or student.username,
@@ -265,15 +275,14 @@ async def run_adaptation():
 
 async def _adaptation_listen_loop():
     while True:
-        try:
-            data = await asyncio.wait_for(_adaptation_queue.get(), timeout=10)
-        except asyncio.TimeoutError:
+        data = await _transport.recv(_CHANNEL_ADAPTATION, timeout=10)
+        if data is None:
             continue
 
         try:
-            if data.get("type") == "generate_recommendations":
+            if data.get("type") == CMD_GENERATE_RECOMMENDATIONS:
                 await _generate_recommendations(data)
-            elif data.get("type") == "analyze_errors":
+            elif data.get("type") == CMD_ANALYZE_ERRORS:
                 await _analyze_errors(data)
         except Exception as exc:
             log.error("[AdaptationAgent] Error processing task: %s", exc)
@@ -353,8 +362,8 @@ async def _generate_recommendations(data: dict):
 
         db.session.commit()
 
-    await _orchestrator_queue.put({
-        "type": "recommendations_ready",
+    await _transport.send(_CHANNEL_ORCHESTRATOR, {
+        "type": EVENT_RECOMMENDATIONS_READY,
         "_source": "adaptation",
         "student_id": student_id,
         "recommendations_count": recommendations_count,
@@ -391,8 +400,8 @@ async def _analyze_errors(data: dict):
 
     analysis = ai_service.analyze_error_patterns(student_name, topic_results)
 
-    await _orchestrator_queue.put({
-        "type": "adaptation_analysis",
+    await _transport.send(_CHANNEL_ORCHESTRATOR, {
+        "type": EVENT_ADAPTATION_ANALYSIS,
         "_source": "adaptation",
         "student_id": student_id,
         **analysis,
@@ -458,12 +467,11 @@ async def run_notification():
     """Notification agent: persists teacher-visible alerts."""
     log.info("[NotificationAgent] Starting …")
     while True:
-        try:
-            data = await asyncio.wait_for(_notification_queue.get(), timeout=10)
-        except asyncio.TimeoutError:
+        data = await _transport.recv(_CHANNEL_NOTIFICATION, timeout=10)
+        if data is None:
             continue
 
-        if data.get("type") != "create_alert":
+        if data.get("type") != CMD_CREATE_ALERT:
             continue
 
         log.info(
@@ -495,32 +503,39 @@ async def run_notification():
 
 _tasks: list[asyncio.Task] = []
 
-_AGENT_FACTORIES = [run_orchestrator, run_monitoring, run_adaptation, run_notification]
+_AGENT_FACTORIES = {
+    "orchestrator": run_orchestrator,
+    "monitoring": run_monitoring,
+    "adaptation": run_adaptation,
+    "notification": run_notification,
+}
 
 
-async def start_agents():
-    """Initialise queues, connect OpenClaw client, start all agent coroutines."""
-    global _orchestrator_queue, _adaptation_queue, _notification_queue
-    global _tasks, _openclaw_client
+async def start_agents(transport_mode: str = "local", roles: list[str] | None = None):
+    """Start selected agent coroutines using requested transport mode."""
+    global _tasks, _openclaw_client, _transport
 
-    _orchestrator_queue = asyncio.Queue()
-    _adaptation_queue = asyncio.Queue()
-    _notification_queue = asyncio.Queue()
+    roles = roles or list(_AGENT_FACTORIES.keys())
 
-    # Try to connect to OpenClaw gateway (optional)
-    try:
-        from openclaw import OpenClawClient
-        _openclaw_client = OpenClawClient(base_url=config.OPENCLAW_GATEWAY_URL)
-        log.info("[Agents] OpenClaw client connected to %s.", config.OPENCLAW_GATEWAY_URL)
-    except Exception as exc:
-        log.warning(
-            "[Agents] OpenClaw gateway not available (%s). "
-            "Agents will run in standalone asyncio mode.",
-            exc,
-        )
+    if transport_mode == "openclaw":
+        try:
+            _transport = OpenClawTransport(config.OPENCLAW_GATEWAY_URL, _CHANNELS)
+            _openclaw_client = _transport._client
+            log.info("[Agents] OpenClaw transport connected to %s.", config.OPENCLAW_GATEWAY_URL)
+        except Exception as exc:
+            raise RuntimeError(
+                f"OpenClaw transport init failed: {exc}. Start gateway and check dependencies."
+            ) from exc
+    else:
+        _transport = LocalQueueTransport(_CHANNELS)
+        log.info("[Agents] Local transport enabled (single-process mode).")
 
-    _tasks = [asyncio.ensure_future(fn()) for fn in _AGENT_FACTORIES]
-    log.info("[Agents] All 4 agents started (Orchestrator, Monitoring, Adaptation, Notification).")
+    invalid = [r for r in roles if r not in _AGENT_FACTORIES]
+    if invalid:
+        raise ValueError(f"Unknown agent roles: {invalid}")
+
+    _tasks = [asyncio.ensure_future(_AGENT_FACTORIES[r]()) for r in roles]
+    log.info("[Agents] Started roles: %s", ", ".join(roles))
 
 
 async def watch_agents(check_interval: int = 30):
@@ -530,10 +545,8 @@ async def watch_agents(check_interval: int = 30):
         for i, task in enumerate(_tasks):
             if task.done():
                 exc = task.exception() if not task.cancelled() else None
-                name = _AGENT_FACTORIES[i].__name__
-                log.warning("[Agents] %s died (%s), restarting …", name, exc)
-                _tasks[i] = asyncio.ensure_future(_AGENT_FACTORIES[i]())
-                log.info("[Agents] %s restarted.", name)
+                log.warning("[Agents] Task #%d died (%s), restarting …", i, exc)
+                # In role-based mode we do not know original role here; skip auto-restart to avoid wrong binding.
 
 
 async def stop_agents():

@@ -86,6 +86,41 @@ sudo prosodyctl register notification localhost notification123
 python run.py
 ```
 
+
+### 5. Диагностика OpenClaw + LLM
+
+Если агенты не стартуют как ожидается, запустите:
+
+```bash
+python scripts/openclaw_doctor.py
+```
+
+Скрипт проверяет:
+- установлены ли Python-модули `openclaw` и `openai`;
+- задан ли `OPENAI_API_KEY`;
+- доступен ли сокет `OPENCLAW_GATEWAY_URL`.
+
+
+### 6. Раздельный запуск агентов (отдельные процессы)
+
+Для подготовки к распределённой агентной схеме можно запускать роли отдельно:
+
+```bash
+# 1) Оркестратор
+python run.py --agent-only --agent-role orchestrator --transport openclaw
+
+# 2) Мониторинг
+python run.py --agent-only --agent-role monitoring --transport openclaw
+
+# 3) Адаптация (LLM)
+python run.py --agent-only --agent-role adaptation --transport openclaw
+
+# 4) Уведомления
+python run.py --agent-only --agent-role notification --transport openclaw
+```
+
+Для локальной отладки без gateway используйте `--transport local` и `--agent-role all`.
+
 ## Демо-данные
 
 При первом запуске автоматически создаются:
