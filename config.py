@@ -6,14 +6,33 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 SECRET_KEY = os.environ.get("SECRET_KEY", "lms-secret-key-change-in-production")
 DATABASE_URI = "sqlite:///" + os.path.join(BASE_DIR, "lms.db")
 # SQLite concurrency: longer timeout to avoid "database is locked" when
-# Flask and OpenClaw agents write simultaneously.
+# Flask and SPADE agents write simultaneously.
 SQLALCHEMY_ENGINE_OPTIONS = {
     "connect_args": {"timeout": 30},
     "pool_pre_ping": True,
 }
 
-# OpenClaw gateway (запускается отдельно: openclaw onboard --install-daemon)
-OPENCLAW_GATEWAY_URL = os.environ.get("OPENCLAW_GATEWAY_URL", "http://localhost:18789")
+# XMPP server (Prosody / ejabberd / any XMPP-compliant server)
+XMPP_SERVER = os.environ.get("XMPP_SERVER", "localhost")
+
+XMPP_AGENTS = {
+    "orchestrator": {
+        "jid": f"orchestrator@{XMPP_SERVER}",
+        "password": os.environ.get("ORCHESTRATOR_PWD", "orchestrator123"),
+    },
+    "monitoring": {
+        "jid": f"monitoring@{XMPP_SERVER}",
+        "password": os.environ.get("MONITORING_PWD", "monitoring123"),
+    },
+    "adaptation": {
+        "jid": f"adaptation@{XMPP_SERVER}",
+        "password": os.environ.get("ADAPTATION_PWD", "adaptation123"),
+    },
+    "notification": {
+        "jid": f"notification@{XMPP_SERVER}",
+        "password": os.environ.get("NOTIFICATION_PWD", "notification123"),
+    },
+}
 
 # Agent thresholds
 RISK_SCORE_THRESHOLD = 50          # % below which a student is "at risk"

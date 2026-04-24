@@ -1,6 +1,18 @@
 #!/usr/bin/env python3
 """
 Entry point for the LMS multi-agent platform.
+
+Usage:
+    # Run web app only (no XMPP server required):
+    python run.py --web-only
+
+    # Run with SPADE agents (requires XMPP server):
+    python run.py
+
+Environment variables:
+    XMPP_SERVER    – XMPP server hostname (default: localhost)
+    SECRET_KEY     – Flask secret key
+    FLASK_PORT     – Web server port (default: 5000)
 """
 
 import argparse
@@ -8,6 +20,7 @@ import asyncio
 import logging
 import os
 import signal
+import sys
 import threading
 
 from app import create_app
@@ -26,86 +39,66 @@ def run_flask(app, port: int):
 
 def main():
     parser = argparse.ArgumentParser(description="LMS Multi-Agent Platform")
-    parser.add_argument("--web-only", action="store_true", help="Run only Flask web interface.")
     parser.add_argument(
-        "--transport",
-        choices=["local", "openclaw"],
-        default="local",
-        help="Agent transport backend.",
-    )
-    parser.add_argument(
-        "--agent-role",
-        choices=["all", "orchestrator", "monitoring", "adaptation", "notification"],
-        default="all",
-        help="Run all agents or one selected role.",
-    )
-    parser.add_argument(
-        "--agent-only",
+        "--web-only",
         action="store_true",
-        help="Run only agents (no Flask server).",
+        help="Run the web interface only, without starting SPADE agents.",
     )
     parser.add_argument(
         "--port",
         type=int,
         default=int(os.environ.get("FLASK_PORT", 5000)),
-        help="Flask port.",
+        help="Port for the Flask web server (default: 5000).",
     )
     args = parser.parse_args()
-
-    if args.web_only and args.agent_only:
-        raise SystemExit("Cannot combine --web-only and --agent-only")
 
     app = create_app()
 
     if args.web_only:
         log.info("Starting LMS in web-only mode (no agents).")
+        log.info("Open http://localhost:%d in your browser.", args.port)
         app.run(host="0.0.0.0", port=args.port, debug=True)
         return
 
+    # --- Full mode: web + SPADE agents ---
     from agents import set_flask_app, start_agents, stop_agents, watch_agents
 
     set_flask_app(app)
-    roles = None if args.agent_role == "all" else [args.agent_role]
 
-    flask_thread = None
-    if not args.agent_only:
-        flask_thread = threading.Thread(target=run_flask, args=(app, args.port), daemon=True)
-        flask_thread.start()
-        log.info("Flask web server started on port %d.", args.port)
-    else:
-        log.info("Starting agent-only mode (role=%s, transport=%s).", args.agent_role, args.transport)
+    # Start Flask in a background thread
+    flask_thread = threading.Thread(
+        target=run_flask, args=(app, args.port), daemon=True,
+    )
+    flask_thread.start()
+    log.info("Flask web server started on port %d.", args.port)
+    log.info("Open http://localhost:%d in your browser.", args.port)
 
+    # Start SPADE agents in the asyncio event loop
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
-    watch_task = None
+    def shutdown():
+        log.info("Shutting down agents …")
+        loop.run_until_complete(stop_agents())
+        loop.close()
+        sys.exit(0)
 
-    async def _graceful_stop():
-        nonlocal watch_task
-        if watch_task is not None:
-            watch_task.cancel()
-            await asyncio.gather(watch_task, return_exceptions=True)
-        await stop_agents()
-        loop.stop()
-
-    def shutdown(*_):
-        asyncio.ensure_future(_graceful_stop(), loop=loop)
-
-    signal.signal(signal.SIGINT, shutdown)
-    signal.signal(signal.SIGTERM, shutdown)
+    signal.signal(signal.SIGINT, lambda *_: shutdown())
+    signal.signal(signal.SIGTERM, lambda *_: shutdown())
 
     try:
-        log.info("Starting agents …")
-        loop.run_until_complete(start_agents(transport_mode=args.transport, roles=roles))
-        watch_task = asyncio.ensure_future(watch_agents(), loop=loop)
+        log.info("Starting SPADE agents …")
+        loop.run_until_complete(start_agents())
+        log.info("All agents are running. Press Ctrl+C to stop.")
+        asyncio.ensure_future(watch_agents(), loop=loop)
         loop.run_forever()
+    except KeyboardInterrupt:
+        shutdown()
     except Exception as exc:
-        log.error("Agent runtime failed: %s", exc)
-        if flask_thread is not None:
-            flask_thread.join()
-    finally:
-        if not loop.is_closed():
-            loop.close()
+        log.error("SPADE agents failed: %s", exc)
+        log.info("Web server continues running without agents on port %d.", args.port)
+        log.info("Restart with --web-only to suppress this, or fix the XMPP server.")
+        flask_thread.join()
 
 
 if __name__ == "__main__":
