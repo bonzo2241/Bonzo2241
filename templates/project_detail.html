@@ -12,6 +12,9 @@
     <h1>{{ project.title }}</h1>
     <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
         {% if membership %}
+        <form method="post" action="{{ url_for('check_project_risks', project_id=project.id) }}">
+            <button type="submit" class="btn btn-primary">Проверить проектные риски</button>
+        </form>
         <form method="post" action="{{ url_for('leave_project', project_id=project.id) }}">
             <button type="submit" class="btn btn-outline"
                     onclick="return confirm('Выйти из проекта?')">Выйти из проекта</button>
@@ -36,6 +39,56 @@
         {% endif %}
         <span class="text-muted">Участников: <strong>{{ members|length }} / {{ project.max_members }}</strong></span>
     </div>
+</div>
+{% endif %}
+
+{% if project_recs %}
+<div class="section-card">
+    <h3>Проектные рекомендации</h3>
+    <p class="text-muted" style="font-size:0.85rem;margin-bottom:0.75rem;">
+        Система сформировала рекомендации на основе дедлайна, статуса задач,
+        вашего Trust Score и SRI.
+    </p>
+    {% for rec in project_recs %}
+    <div style="border-left:4px solid
+        {% if rec.rec_type == 'deadline' %}var(--danger)
+        {% elif rec.rec_type == 'imbalance' %}var(--warning)
+        {% elif rec.rec_type == 'lead_report' %}var(--blue-700)
+        {% else %}var(--border){% endif %};
+        padding:0.6rem 0.85rem;margin-bottom:0.75rem;
+        background:var(--bg-card);border-radius:0 6px 6px 0;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;
+                    gap:0.5rem;margin-bottom:0.3rem;">
+            <span class="badge
+                {% if rec.rec_type == 'deadline' %}badge-danger
+                {% elif rec.rec_type == 'imbalance' %}badge-warning
+                {% elif rec.rec_type == 'lead_report' %}badge-info
+                {% else %}badge-secondary{% endif %}" style="white-space:nowrap;">
+                {% if rec.rec_type == 'deadline' %}Дедлайн
+                {% elif rec.rec_type == 'imbalance' %}Вклад
+                {% elif rec.rec_type == 'lead_report' %}Тимлид
+                {% else %}Проект{% endif %}
+            </span>
+            {% if rec.trust_mode %}
+            <span class="text-muted" style="font-size:0.75rem;white-space:nowrap;">
+                Режим: {{ rec.trust_mode | replace('informational','Информационный')
+                                         | replace('mixed','Смешанный')
+                                         | replace('autonomous','Автономный') }}
+            </span>
+            {% endif %}
+        </div>
+        <p style="margin:0;font-size:0.9rem;">{{ rec.recommendation }}</p>
+        <small class="text-muted">{{ rec.created_at.strftime('%d.%m.%Y %H:%M') }}</small>
+    </div>
+    {% endfor %}
+</div>
+{% elif membership %}
+<div class="section-card" style="border:1px dashed var(--border);">
+    <p class="text-muted" style="margin:0;font-size:0.9rem;">
+        Нажмите <strong>«Проверить проектные риски»</strong>, чтобы система
+        сформировала персональные рекомендации с учётом дедлайна, ваших задач,
+        Trust Score и SRI.
+    </p>
 </div>
 {% endif %}
 

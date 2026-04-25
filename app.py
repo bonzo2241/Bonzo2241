@@ -29,6 +29,7 @@ from models import (
     OrchestratorLog,
     Project,
     ProjectMembership,
+    ProjectRecommendation,
     ProjectTask,
     Question,
     RecommendationInteraction,
@@ -58,6 +59,7 @@ def create_app() -> Flask:
             conn.commit()
         _seed_demo_data()
         _ensure_student_profiles()
+        _seed_demo_project()
 
     _register_routes(app)
     return app
@@ -417,6 +419,125 @@ def _seed_demo_data():  # noqa: C901
 
 
 # -------------------------------------------------------------------
+#  Demo project seed (team collaboration demo scenario)
+# -------------------------------------------------------------------
+
+def _seed_demo_project():
+    """Seed / refresh the demo project for the team collaboration demo.
+
+    On every startup: refreshes the deadline to now+2d so the demo always
+    reads "urgent". On first run (no reseed): creates the full project with
+    members, tasks, Trust/SRI values matching the reseed scenario.
+    """
+    now = datetime.utcnow()
+
+    existing = Project.query.filter_by(title="Визуализация алгоритмов сортировки").first()
+    if existing:
+        existing.deadline = now + timedelta(days=2)
+        db.session.commit()
+        return
+
+    teacher = User.query.filter_by(username="teacher").first()
+    if not teacher:
+        return
+
+    topic = Topic.query.filter(Topic.title.like("%лгоритм%")).first()
+
+    project = Project(
+        title="Визуализация алгоритмов сортировки",
+        description=(
+            "Командный проект: визуальная памятка алгоритмов сортировки. "
+            "Демо-сценарий: срочный дедлайн, дисбаланс вклада, три Trust-режима."
+        ),
+        created_by=teacher.id,
+        topic_id=topic.id if topic else None,
+        deadline=now + timedelta(days=2),
+        max_members=5,
+        status="active",
+    )
+    db.session.add(project)
+    db.session.flush()
+
+    volkova = User.query.filter_by(username="volkova").first()
+    morozov = User.query.filter_by(username="morozov").first()
+    pavlov   = User.query.filter_by(username="pavlov").first()
+    belov    = User.query.filter_by(username="belov").first()
+
+    if not all([volkova, morozov, pavlov, belov]):
+        db.session.rollback()
+        return
+
+    # Set Trust/SRI matching the reseed demo scenario (only if still default).
+    for student, trust, sri in [
+        (volkova, 44.0, 58.0),  # lead   — mixed trust,   passive SRI
+        (morozov, 24.0, 35.0),  # member — info trust,    standard SRI
+        (pavlov,  30.0, 48.0),  # member — info trust,    standard SRI
+        (belov,   18.0, 18.0),  # member — info trust,    active SRI
+    ]:
+        profile = StudentProfile.query.filter_by(student_id=student.id).first()
+        if profile and profile.trust_score == 50.0:
+            profile.trust_score = trust
+            profile.sri = sri
+            profile.updated_at = now
+
+    db.session.add_all([
+        ProjectMembership(project_id=project.id, student_id=volkova.id, role="lead"),
+        ProjectMembership(project_id=project.id, student_id=morozov.id, role="member"),
+        ProjectMembership(project_id=project.id, student_id=pavlov.id,  role="member"),
+        ProjectMembership(project_id=project.id, student_id=belov.id,   role="member"),
+    ])
+
+    db.session.add_all([
+        ProjectTask(
+            project_id=project.id,
+            title="Анализ пузырьковой сортировки",
+            description="Описать шаги, привести пример, указать сложность.",
+            assigned_to=volkova.id,
+            status="done",
+            completed_at=now - timedelta(hours=20),
+        ),
+        ProjectTask(
+            project_id=project.id,
+            title="Анализ быстрой сортировки",
+            description="Описать QuickSort, псевдокод, лучший/худший случай.",
+            assigned_to=volkova.id,
+            status="done",
+            completed_at=now - timedelta(hours=8),
+        ),
+        ProjectTask(
+            project_id=project.id,
+            title="Карточка по бинарному поиску",
+            description="Описать алгоритм простыми словами, пример поиска числа.",
+            assigned_to=morozov.id,
+            status="in_progress",
+        ),
+        ProjectTask(
+            project_id=project.id,
+            title="Памятка по O-нотации",
+            description="Три примера: O(1), O(n), O(log n) с пояснениями.",
+            assigned_to=pavlov.id,
+            status="pending",
+        ),
+        ProjectTask(
+            project_id=project.id,
+            title="Сравнительная таблица алгоритмов",
+            description="Таблица: название, сложность, стабильность, применение.",
+            assigned_to=belov.id,
+            status="pending",
+        ),
+        ProjectTask(
+            project_id=project.id,
+            title="Оформление итоговой презентации",
+            description="Собрать все части в единый слайд-документ.",
+            assigned_to=None,
+            status="pending",
+        ),
+    ])
+
+    db.session.commit()
+
+
+# -------------------------------------------------------------------
 #  Student Profile helpers (Trust Score, SRI, Consent)
 # -------------------------------------------------------------------
 
@@ -606,6 +727,334 @@ def update_trust_score(student_id: int, action: str, had_good_outcome: bool = Fa
 
 
 # -------------------------------------------------------------------
+#  Project recommendation engine
+# -------------------------------------------------------------------
+
+def _days_label(days: int) -> str:
+    """Return a human-readable Russian label for a number of days."""
+    if days == 0:
+        return "менее суток"
+    if days == 1:
+        return "1 день"
+    if 2 <= days <= 4:
+        return f"{days} дня"
+    return f"{days} дней"
+
+
+def _format_deadline_rec(
+    trust_mode: str,
+    trust: float,
+    sri: float,
+    days_left: int,
+    task_name: str,
+    task_status: str,
+) -> str:
+    """Return a Trust-aware deadline recommendation string."""
+    days_str = _days_label(days_left)
+
+    if trust_mode == "informational":
+        if task_status == "pending":
+            return (
+                f"Система зафиксировала риск: задача «{task_name}» не начата, "
+                f"до дедлайна осталось {days_str}. "
+                f"Рекомендация информационная (Trust={trust:.0f}, SRI={sri:.0f}): "
+                f"начните с первого шага сегодня и переведите задачу "
+                f"в статус «В работе» вручную."
+            )
+        if task_status == "in_progress":
+            return (
+                f"Система зафиксировала: задача «{task_name}» в работе, "
+                f"до дедлайна осталось {days_str}. "
+                f"Рекомендуется проверить прогресс, запланировать завершение "
+                f"и при затруднениях обратиться к тимлиду."
+            )
+
+    elif trust_mode == "mixed":
+        if task_status == "pending":
+            return (
+                f"До дедлайна осталось {days_str}. "
+                f"Рекомендуется перевести задачу «{task_name}» в работу "
+                f"и завершить первый этап сегодня."
+            )
+        if task_status == "in_progress":
+            return (
+                f"До дедлайна {days_str}. Проверьте прогресс по задаче "
+                f"«{task_name}» и запланируйте завершение до дедлайна."
+            )
+
+    else:  # autonomous
+        if task_status == "pending":
+            return (
+                f"До дедлайна {days_str}. Задача «{task_name}» требует начала работы. "
+                f"Система предлагает обновить статус и завершить задачу до дедлайна."
+            )
+        if task_status == "in_progress":
+            return (
+                f"До дедлайна {days_str}. Задача «{task_name}» должна быть завершена. "
+                f"Проверьте финальную готовность вашей части."
+            )
+
+    return f"До дедлайна осталось {days_str}. Проверьте статус задачи «{task_name}»."
+
+
+def generate_project_recommendations(project_id: int) -> list:  # noqa: C901
+    """Analyse a project and persist adaptive recommendations for all participants.
+
+    Clears previous recommendations for the project before generating new ones
+    so the page always shows a fresh, consistent picture.
+
+    Returns the list of saved ProjectRecommendation objects.
+    """
+    project = Project.query.get(project_id)
+    if not project:
+        return []
+
+    now = datetime.utcnow()
+
+    # Clear stale recommendations
+    ProjectRecommendation.query.filter_by(project_id=project_id).delete()
+    db.session.flush()
+
+    members = ProjectMembership.query.filter_by(project_id=project_id).all()
+    all_tasks = ProjectTask.query.filter_by(project_id=project_id).all()
+
+    if not members:
+        db.session.commit()
+        return []
+
+    # ── Deadline urgency ────────────────────────────────────────────────
+    days_left: int | None = None
+    deadline_status = "none"
+    if project.deadline:
+        delta = project.deadline - now
+        days_left = max(0, delta.days)
+        if delta.total_seconds() < 0:
+            deadline_status = "overdue"
+            days_left = abs(delta.days)
+        elif delta.days <= 3:
+            deadline_status = "urgent"
+        elif delta.days <= 7:
+            deadline_status = "warning"
+        else:
+            deadline_status = "ok"
+
+    deadline_active = deadline_status in ("urgent", "warning", "overdue")
+
+    # ── Task contribution stats ─────────────────────────────────────────
+    done_tasks = [t for t in all_tasks if t.status == "done"]
+    unassigned_tasks = [t for t in all_tasks if t.assigned_to is None]
+    total_done = len(done_tasks)
+    total_tasks = len(all_tasks)
+
+    member_stats: dict[int, dict] = {}
+    for m in members:
+        assigned = [t for t in all_tasks if t.assigned_to == m.student_id]
+        member_stats[m.student_id] = {
+            "assigned": assigned,
+            "done":      [t for t in assigned if t.status == "done"],
+            "in_prog":   [t for t in assigned if t.status == "in_progress"],
+            "pending":   [t for t in assigned if t.status == "pending"],
+        }
+
+    # Imbalance: one member did > 60 % of all done tasks
+    top_contributor_id: int | None = None
+    if total_done > 0 and len(members) > 1:
+        for m in members:
+            if len(member_stats[m.student_id]["done"]) / total_done > 0.6:
+                top_contributor_id = m.student_id
+                break
+
+    new_recs: list[ProjectRecommendation] = []
+
+    def _save(student_id, rec_type, text, trust_mode=None):
+        r = ProjectRecommendation(
+            project_id=project_id,
+            student_id=student_id,
+            rec_type=rec_type,
+            recommendation=text,
+            trust_mode=trust_mode,
+        )
+        db.session.add(r)
+        new_recs.append(r)
+
+    # ── Per-student deadline & imbalance recommendations ────────────────
+    lead_membership = next((m for m in members if m.role == "lead"), None)
+
+    for m in members:
+        profile = get_or_create_profile(m.student_id)
+        trust = profile.trust_score
+        sri = profile.sri
+        mode = profile.trust_mode  # informational | mixed | autonomous
+        stats = member_stats[m.student_id]
+
+        # 1. Deadline recommendation
+        if deadline_active and days_left is not None:
+            if stats["pending"]:
+                task_name = stats["pending"][0].title
+                _save(m.student_id, "deadline",
+                      _format_deadline_rec(mode, trust, sri, days_left, task_name, "pending"),
+                      mode)
+            elif stats["in_prog"]:
+                task_name = stats["in_prog"][0].title
+                _save(m.student_id, "deadline",
+                      _format_deadline_rec(mode, trust, sri, days_left, task_name, "in_progress"),
+                      mode)
+            elif stats["done"]:
+                # All assigned tasks done
+                days_str = _days_label(days_left)
+                if mode == "informational":
+                    text = (
+                        f"До дедлайна осталось {days_str}. Ваши задачи выполнены. "
+                        f"Система рекомендует сверить результаты с командой "
+                        f"и убедиться, что финальный материал готов к сдаче."
+                    )
+                elif mode == "mixed":
+                    text = (
+                        f"До дедлайна {days_str}. Ваша часть выполнена — "
+                        f"проверьте финальную готовность и поддержите команду при необходимости."
+                    )
+                else:
+                    text = (
+                        f"До дедлайна {days_str}. Ваша часть готова. "
+                        f"Проверьте финальную готовность проекта."
+                    )
+                _save(m.student_id, "deadline", text, mode)
+            elif not stats["assigned"]:
+                # Member has no tasks at all
+                days_str = _days_label(days_left)
+                if mode == "informational":
+                    text = (
+                        f"До дедлайна осталось {days_str}, но у вас пока нет назначенных задач. "
+                        f"Рекомендуется обратиться к тимлиду для получения задания."
+                    )
+                else:
+                    text = (
+                        f"До дедлайна {days_str}. Запросите задачу у тимлида."
+                    )
+                _save(m.student_id, "deadline", text, mode)
+
+        # 2. Personal imbalance: no contribution while deadline is near
+        if (deadline_active and days_left is not None
+                and len(stats["done"]) == 0 and len(stats["assigned"]) > 0):
+            if mode == "informational":
+                text = (
+                    f"Система зафиксировала: ваш вклад в проект пока не зафиксирован "
+                    f"(0 задач завершено из {len(stats['assigned'])} назначенных). "
+                    f"Рекомендация информационная: выберите одну задачу, переведите её "
+                    f"в статус «В работе» вручную и согласуйте срок с тимлидом."
+                )
+            elif mode == "mixed":
+                text = (
+                    f"Ваш вклад в проект пока не зафиксирован. "
+                    f"Рекомендуется выбрать одну из назначенных задач "
+                    f"и перевести её в работу сегодня."
+                )
+            else:
+                text = (
+                    f"Вклад в проект не зафиксирован. "
+                    f"Начните работу над первой задачей и обновите статус."
+                )
+            _save(m.student_id, "imbalance", text, mode)
+
+    # ── Lead report ─────────────────────────────────────────────────────
+    if lead_membership:
+        lead_parts: list[str] = []
+
+        if unassigned_tasks:
+            names = ", ".join(f"«{t.title}»" for t in unassigned_tasks[:3])
+            suffix = "..." if len(unassigned_tasks) > 3 else ""
+            lead_parts.append(
+                f"В проекте {len(unassigned_tasks)} неназначенных задач: "
+                f"{names}{suffix}. Рекомендуется распределить их между участниками."
+            )
+
+        if top_contributor_id is not None:
+            contributor = next(m for m in members if m.student_id == top_contributor_id)
+            cname = contributor.student.full_name or contributor.student.username
+            lead_parts.append(
+                f"Обнаружен дисбаланс вклада: участник «{cname}» выполнил "
+                f"большую часть задач команды. Рекомендуется перераспределить "
+                f"оставшиеся задачи или уточнить статус у других участников."
+            )
+
+        no_progress: list[str] = []
+        for m in members:
+            if m.student_id == lead_membership.student_id:
+                continue
+            s = member_stats[m.student_id]
+            if len(s["done"]) == 0 and len(s["assigned"]) > 0 and deadline_active:
+                no_progress.append(m.student.full_name or m.student.username)
+
+        if no_progress:
+            lead_parts.append(
+                f"Участники без зафиксированного прогресса: "
+                f"{', '.join(no_progress[:3])}. "
+                f"Рекомендуется уточнить статус задач до дедлайна."
+            )
+
+        if lead_parts:
+            lead_profile = get_or_create_profile(lead_membership.student_id)
+            lead_mode = lead_profile.trust_mode
+            prefix = "Системный отчёт для тимлида: " if lead_mode == "informational" else ""
+            _save(
+                lead_membership.student_id,
+                "lead_report",
+                prefix + " ".join(lead_parts),
+                lead_mode,
+            )
+
+    # ── Teacher team report (student_id = None) ──────────────────────────
+    all_profiles = {m.student_id: get_or_create_profile(m.student_id) for m in members}
+    if all_profiles:
+        team_trust = min(p.trust_score for p in all_profiles.values())
+        trust_label = (
+            "низкий" if team_trust <= 33
+            else ("средний" if team_trust <= 66 else "высокий")
+        )
+        teacher_parts = [
+            f"Командный Trust Score: {team_trust:.0f} ({trust_label})."
+        ]
+
+        low_trust = [
+            (m, all_profiles[m.student_id])
+            for m in members
+            if all_profiles[m.student_id].trust_score <= 33
+        ]
+        if low_trust:
+            names = ", ".join(
+                f"«{m.student.full_name or m.student.username}» "
+                f"(Trust={p.trust_score:.0f})"
+                for m, p in low_trust
+            )
+            teacher_parts.append(
+                f"Участники с низким Trust Score: {names}. "
+                f"Рекомендуется усиленный контроль выполнения задач."
+            )
+
+        teacher_parts.append(
+            f"Прогресс команды: {total_done} из {total_tasks} задач завершено."
+        )
+
+        if deadline_active and days_left is not None:
+            days_str = _days_label(days_left)
+            teacher_parts.append(
+                f"До дедлайна осталось {days_str}. "
+                f"Рекомендуется проверить распределение задач и готовность команды."
+            )
+
+        if unassigned_tasks:
+            teacher_parts.append(
+                f"Неназначенных задач: {len(unassigned_tasks)}. "
+                f"Требуется вмешательство тимлида или преподавателя."
+            )
+
+        _save(None, "teacher_report", " ".join(teacher_parts), None)
+
+    db.session.commit()
+    return new_recs
+
+
+# -------------------------------------------------------------------
 #  Auth helpers
 # -------------------------------------------------------------------
 
@@ -711,7 +1160,7 @@ def _register_routes(app: Flask):
                     "pct": round(correct / total * 100, 1),
                 }
 
-        # Adaptation recommendations for this student
+        # Adaptation recommendations for this student (topic-based)
         recommendations = (
             AdaptationLog.query
             .filter_by(student_id=student_id)
@@ -719,6 +1168,22 @@ def _register_routes(app: Flask):
             .limit(10)
             .all()
         )
+
+        # Project recommendations — latest per project the student is a member of
+        my_project_ids = [
+            m.project_id
+            for m in ProjectMembership.query.filter_by(student_id=student_id).all()
+        ]
+        project_recs = (
+            ProjectRecommendation.query
+            .filter(
+                ProjectRecommendation.student_id == student_id,
+                ProjectRecommendation.project_id.in_(my_project_ids),
+            )
+            .order_by(ProjectRecommendation.created_at.desc())
+            .limit(6)
+            .all()
+        ) if my_project_ids else []
 
         # Load / refresh profile (Trust Score + SRI)
         profile = get_or_create_profile(student_id)
@@ -733,6 +1198,7 @@ def _register_routes(app: Flask):
             topics=topics,
             topic_stats=topic_stats,
             recommendations=recommendations,
+            project_recs=project_recs,
             profile=profile,
         )
 
@@ -1232,13 +1698,42 @@ def _register_routes(app: Flask):
                 "consent": consent,
                 "show_details": consent.team_data or m.student_id == student_id,
             }
+        # Project recommendations for the current student (personal + lead_report if lead)
+        project_recs = (
+            ProjectRecommendation.query
+            .filter_by(project_id=project_id, student_id=student_id)
+            .order_by(ProjectRecommendation.created_at.desc())
+            .all()
+        )
         return render_template(
             "project_detail.html",
             project=project,
             membership=membership,
             members=members,
             member_profiles=member_profiles,
+            project_recs=project_recs,
         )
+
+    @app.route("/student/project/<int:project_id>/check-risks", methods=["POST"])
+    @login_required
+    def check_project_risks(project_id: int):
+        student_id = session["user_id"]
+        membership = ProjectMembership.query.filter_by(
+            project_id=project_id, student_id=student_id
+        ).first()
+        if not membership:
+            flash("Вы не участник этого проекта.", "danger")
+            return redirect(url_for("student_projects"))
+        recs = generate_project_recommendations(project_id)
+        student_recs = [r for r in recs if r.student_id == student_id]
+        if student_recs:
+            flash(
+                f"Сформировано {len(student_recs)} проектных рекомендаций.",
+                "success",
+            )
+        else:
+            flash("Текущих проектных рисков не обнаружено.", "info")
+        return redirect(url_for("student_project_detail", project_id=project_id))
 
     @app.route("/student/project/<int:project_id>/join", methods=["POST"])
     @login_required
@@ -1476,6 +1971,23 @@ def _register_routes(app: Flask):
             min(mp["profile"].trust_score for mp in member_profiles.values())
             if member_profiles else None
         )
+        # Project recommendations: teacher report + all individual recs
+        teacher_recs = (
+            ProjectRecommendation.query
+            .filter_by(project_id=project_id, rec_type="teacher_report")
+            .order_by(ProjectRecommendation.created_at.desc())
+            .limit(5)
+            .all()
+        )
+        all_project_recs = (
+            ProjectRecommendation.query
+            .filter(
+                ProjectRecommendation.project_id == project_id,
+                ProjectRecommendation.rec_type != "teacher_report",
+            )
+            .order_by(ProjectRecommendation.student_id, ProjectRecommendation.created_at.desc())
+            .all()
+        )
         return render_template(
             "teacher_project_detail.html",
             project=project,
@@ -1484,7 +1996,19 @@ def _register_routes(app: Flask):
             students=students,
             member_profiles=member_profiles,
             team_trust=team_trust,
+            teacher_recs=teacher_recs,
+            all_project_recs=all_project_recs,
         )
+
+    @app.route("/teacher/project/<int:project_id>/check-risks", methods=["POST"])
+    @teacher_required
+    def teacher_check_project_risks(project_id: int):
+        recs = generate_project_recommendations(project_id)
+        if recs:
+            flash(f"Сформировано {len(recs)} проектных рекомендаций.", "success")
+        else:
+            flash("Текущих проектных рисков не обнаружено.", "info")
+        return redirect(url_for("teacher_project_detail", project_id=project_id))
 
     @app.route("/teacher/project/<int:project_id>/assign-lead", methods=["POST"])
     @teacher_required

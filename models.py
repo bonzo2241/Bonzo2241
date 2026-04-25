@@ -273,3 +273,21 @@ class ProjectTask(db.Model):
     completed_at = db.Column(db.DateTime, nullable=True)
 
     assignee = db.relationship("User", backref="assigned_tasks")
+
+
+class ProjectRecommendation(db.Model):
+    """Adaptive project-level recommendations (deadline, imbalance, team reports)."""
+    __tablename__ = "project_recommendations"
+
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"), nullable=False)
+    # None = team/teacher-level report (not tied to a specific student)
+    student_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+    # deadline | imbalance | lead_report | teacher_report
+    rec_type = db.Column(db.String(30), nullable=False)
+    recommendation = db.Column(db.Text, nullable=False)
+    trust_mode = db.Column(db.String(20), nullable=True)  # informational | mixed | autonomous
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    project = db.relationship("Project", backref="recommendations")
+    student = db.relationship("User", backref="project_recommendations")

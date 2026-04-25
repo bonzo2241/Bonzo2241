@@ -68,6 +68,52 @@
 </div>
 {% endif %}
 
+{% if project_recs %}
+<div class="section-card" style="margin-bottom:1.5rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.75rem;">
+        <h3 style="margin:0;">Проектные рекомендации</h3>
+        <a href="{{ url_for('student_projects') }}" class="btn btn-sm btn-outline">Все проекты</a>
+    </div>
+    <p class="text-muted" style="font-size:0.85rem;margin-bottom:0.75rem;">
+        Рекомендации сформированы с учётом дедлайна ваших проектов, статуса задач и вашего Trust Score.
+    </p>
+    {% for rec in project_recs %}
+    <div style="border-left:4px solid
+        {% if rec.rec_type == 'deadline' %}var(--danger)
+        {% elif rec.rec_type == 'imbalance' %}var(--warning)
+        {% elif rec.rec_type == 'lead_report' %}var(--blue-700)
+        {% else %}var(--border){% endif %};
+        padding:0.55rem 0.8rem;margin-bottom:0.6rem;
+        background:var(--bg-card);border-radius:0 6px 6px 0;">
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.25rem;flex-wrap:wrap;">
+            <span class="badge
+                {% if rec.rec_type == 'deadline' %}badge-danger
+                {% elif rec.rec_type == 'imbalance' %}badge-warning
+                {% elif rec.rec_type == 'lead_report' %}badge-info
+                {% else %}badge-secondary{% endif %}">
+                {% if rec.rec_type == 'deadline' %}Дедлайн
+                {% elif rec.rec_type == 'imbalance' %}Вклад
+                {% elif rec.rec_type == 'lead_report' %}Тимлид
+                {% else %}Проект{% endif %}
+            </span>
+            <a href="{{ url_for('student_project_detail', project_id=rec.project_id) }}"
+               style="font-size:0.8rem;color:var(--blue-700);">
+                {{ rec.project.title }}
+            </a>
+            {% if rec.trust_mode %}
+            <span class="text-muted" style="font-size:0.75rem;">
+                [{{ rec.trust_mode | replace('informational','Информационный')
+                                   | replace('mixed','Смешанный')
+                                   | replace('autonomous','Автономный') }}]
+            </span>
+            {% endif %}
+        </div>
+        <p style="margin:0;font-size:0.88rem;">{{ rec.recommendation }}</p>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
 {% if topics %}
 <div class="topics-grid">
     {% for topic in topics %}
