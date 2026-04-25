@@ -1160,7 +1160,7 @@ def _register_routes(app: Flask):
                     "pct": round(correct / total * 100, 1),
                 }
 
-        # Adaptation recommendations for this student
+        # Adaptation recommendations for this student (topic-based)
         recommendations = (
             AdaptationLog.query
             .filter_by(student_id=student_id)
@@ -1168,6 +1168,22 @@ def _register_routes(app: Flask):
             .limit(10)
             .all()
         )
+
+        # Project recommendations — latest per project the student is a member of
+        my_project_ids = [
+            m.project_id
+            for m in ProjectMembership.query.filter_by(student_id=student_id).all()
+        ]
+        project_recs = (
+            ProjectRecommendation.query
+            .filter(
+                ProjectRecommendation.student_id == student_id,
+                ProjectRecommendation.project_id.in_(my_project_ids),
+            )
+            .order_by(ProjectRecommendation.created_at.desc())
+            .limit(6)
+            .all()
+        ) if my_project_ids else []
 
         # Load / refresh profile (Trust Score + SRI)
         profile = get_or_create_profile(student_id)
@@ -1182,6 +1198,7 @@ def _register_routes(app: Flask):
             topics=topics,
             topic_stats=topic_stats,
             recommendations=recommendations,
+            project_recs=project_recs,
             profile=profile,
         )
 
