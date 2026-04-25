@@ -423,16 +423,16 @@ def _seed_demo_data():  # noqa: C901
 # -------------------------------------------------------------------
 
 def _seed_demo_project():
-    """Seed / refresh the demo project used to showcase team collaboration features.
+    """Seed / refresh the demo project for the team collaboration demo.
 
-    Called on every app startup so the deadline stays fresh (always 2 days out),
-    making the demo scenario reproducible regardless of when the app is started.
+    On every startup: refreshes the deadline to now+2d so the demo always
+    reads "urgent". On first run (no reseed): creates the full project with
+    members, tasks, Trust/SRI values matching the reseed scenario.
     """
     now = datetime.utcnow()
 
     existing = Project.query.filter_by(title="Визуализация алгоритмов сортировки").first()
     if existing:
-        # Refresh deadline so it always reads "~2 days left" for demo purposes
         existing.deadline = now + timedelta(days=2)
         db.session.commit()
         return
@@ -447,7 +447,7 @@ def _seed_demo_project():
         title="Визуализация алгоритмов сортировки",
         description=(
             "Командный проект: визуальная памятка алгоритмов сортировки. "
-            "Каждый участник разрабатывает свой раздел — анализ алгоритма, O-нотация, сравнение."
+            "Демо-сценарий: срочный дедлайн, дисбаланс вклада, три Trust-режима."
         ),
         created_by=teacher.id,
         topic_id=topic.id if topic else None,
@@ -459,27 +459,30 @@ def _seed_demo_project():
     db.session.flush()
 
     volkova = User.query.filter_by(username="volkova").first()
-    pavlov = User.query.filter_by(username="pavlov").first()
-    belov = User.query.filter_by(username="belov").first()
+    morozov = User.query.filter_by(username="morozov").first()
+    pavlov   = User.query.filter_by(username="pavlov").first()
+    belov    = User.query.filter_by(username="belov").first()
 
-    if not all([volkova, pavlov, belov]):
+    if not all([volkova, morozov, pavlov, belov]):
         db.session.rollback()
         return
 
-    # Set Trust / SRI to match the demo scenario
+    # Set Trust/SRI matching the reseed demo scenario (only if still default).
     for student, trust, sri in [
-        (volkova, 52.0, 55.0),  # lead — mixed trust, standard SRI
-        (pavlov,  30.0, 48.0),  # member — low trust, standard SRI
-        (belov,   18.0, 22.0),  # member — very low trust, active SRI
+        (volkova, 44.0, 58.0),  # lead   — mixed trust,   passive SRI
+        (morozov, 24.0, 35.0),  # member — info trust,    standard SRI
+        (pavlov,  30.0, 48.0),  # member — info trust,    standard SRI
+        (belov,   18.0, 18.0),  # member — info trust,    active SRI
     ]:
         profile = StudentProfile.query.filter_by(student_id=student.id).first()
-        if profile:
+        if profile and profile.trust_score == 50.0:
             profile.trust_score = trust
             profile.sri = sri
             profile.updated_at = now
 
     db.session.add_all([
         ProjectMembership(project_id=project.id, student_id=volkova.id, role="lead"),
+        ProjectMembership(project_id=project.id, student_id=morozov.id, role="member"),
         ProjectMembership(project_id=project.id, student_id=pavlov.id,  role="member"),
         ProjectMembership(project_id=project.id, student_id=belov.id,   role="member"),
     ])
@@ -488,37 +491,44 @@ def _seed_demo_project():
         ProjectTask(
             project_id=project.id,
             title="Анализ пузырьковой сортировки",
-            description="Описать алгоритм, привести пример пошагово, указать сложность.",
+            description="Описать шаги, привести пример, указать сложность.",
             assigned_to=volkova.id,
             status="done",
-            completed_at=now - timedelta(hours=12),
+            completed_at=now - timedelta(hours=20),
         ),
         ProjectTask(
             project_id=project.id,
             title="Анализ быстрой сортировки",
-            description="Описать QuickSort, привести псевдокод, указать лучший/худший случай.",
+            description="Описать QuickSort, псевдокод, лучший/худший случай.",
             assigned_to=volkova.id,
             status="done",
-            completed_at=now - timedelta(hours=6),
+            completed_at=now - timedelta(hours=8),
+        ),
+        ProjectTask(
+            project_id=project.id,
+            title="Карточка по бинарному поиску",
+            description="Описать алгоритм простыми словами, пример поиска числа.",
+            assigned_to=morozov.id,
+            status="in_progress",
         ),
         ProjectTask(
             project_id=project.id,
             title="Памятка по O-нотации",
-            description="Собрать 3 примера сложности O(1), O(n), O(log n) для справочной карточки.",
+            description="Три примера: O(1), O(n), O(log n) с пояснениями.",
             assigned_to=pavlov.id,
             status="pending",
         ),
         ProjectTask(
             project_id=project.id,
             title="Сравнительная таблица алгоритмов",
-            description="Составить таблицу: название, сложность, стабильность, применение.",
+            description="Таблица: название, сложность, стабильность, применение.",
             assigned_to=belov.id,
             status="pending",
         ),
         ProjectTask(
             project_id=project.id,
             title="Оформление итоговой презентации",
-            description="Собрать все части в единый документ.",
+            description="Собрать все части в единый слайд-документ.",
             assigned_to=None,
             status="pending",
         ),

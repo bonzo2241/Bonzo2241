@@ -6,7 +6,7 @@ import json
 from flask import Flask
 
 import config
-from app import compute_sri
+from app import compute_sri, generate_project_recommendations
 from models import (
     AdaptationLog,
     AgentReport,
@@ -15,6 +15,7 @@ from models import (
     OrchestratorLog,
     Project,
     ProjectMembership,
+    ProjectRecommendation,
     ProjectTask,
     Question,
     RecommendationInteraction,
@@ -68,7 +69,37 @@ def seed() -> None:
             profile.sri = compute_sri(student.id)
             profile.updated_at = now
 
+        # Override SRI to cover all four modes for demo purposes
+        demo_sri = {
+            "belov":    18.0,   # Активный (≤25) — система максимально вмешивается
+            "morozov":  35.0,   # Стандартный (26-50)
+            "pavlov":   48.0,   # Стандартный (26-50)
+            "fedorov":  44.0,   # Стандартный (26-50)
+            "antonova": 42.0,   # Стандартный (26-50)
+            "volkova":  58.0,   # Пассивный (51-75)
+            "kozlov":   62.0,   # Пассивный (51-75)
+            "student":  72.0,   # Пассивный (51-75)
+            "egorova":  78.0,   # Минимальный (76-100)
+            "novikova": 84.0,   # Минимальный (76-100)
+            "sidorova": 90.0,   # Минимальный (76-100)
+        }
+        for username, sri_val in demo_sri.items():
+            profile = StudentProfile.query.filter_by(student_id=students[username].id).first()
+            if profile:
+                profile.sri = sri_val
+
         db.session.commit()
+
+        # Pre-generate project recommendations for active urgent projects
+        # so the UI shows them immediately without clicking the button.
+        urgent_titles = [
+            "Визуализация алгоритмов сортировки",
+            "Адаптивный тренажер по Python",
+        ]
+        for title in urgent_titles:
+            project = Project.query.filter_by(title=title).first()
+            if project:
+                generate_project_recommendations(project.id)
 
 
 def create_users() -> dict[str, User]:
@@ -598,55 +629,121 @@ def create_projects(
     now: datetime,
 ) -> None:
     project_specs = [
-        {
-            "title": "Адаптивный тренажер по Python",
-            "description": "Команда собирает задания по Python и проверяет, как их можно адаптировать под разные профили студентов.",
-            "teacher": teachers["teacher"],
-            "topic": topics["python"],
-            "status": "active",
-            "max_members": 4,
-            "deadline": now + timedelta(days=8),
-            "created_at": now - timedelta(days=4),
-            "members": [("student", "lead"), ("kozlov", "member"), ("fedorov", "member")],
-            "tasks": [
-                ("Подготовить базовые упражнения", "Сделать набор задач на input, if и циклы.", "student", "done", now - timedelta(days=2)),
-                ("Разбить задания по уровням", "Определить простые, средние и сложные задания.", "kozlov", "in_progress", None),
-                ("Проверить объяснения к тестам", "Уточнить формулировки и пояснения после ответов.", "fedorov", "pending", None),
-            ],
-        },
+        # ── Проект 1: СРОЧНЫЙ дедлайн (2 дня) ───────────────────────────────
+        # Демонстрирует все три механики: deadline-рекомендации, командный
+        # дисбаланс (Волкова выполнила >60% задач), Trust-aware формат
+        # (informational для Морозова/Павлова/Белова, mixed для Волковой).
         {
             "title": "Визуализация алгоритмов сортировки",
-            "description": "Проект с командой риска: позволяет показать командный Trust Score и ограничения по consent.",
+            "description": (
+                "Командный проект: визуальная памятка алгоритмов сортировки. "
+                "Каждый участник разрабатывает свой раздел. "
+                "Демо-сценарий: срочный дедлайн, дисбаланс вклада, разные Trust-режимы."
+            ),
             "teacher": teachers["teacher2"],
             "topic": topics["algo"],
             "status": "active",
             "max_members": 5,
-            "deadline": now + timedelta(days=10),
+            "deadline": now + timedelta(days=2),
             "created_at": now - timedelta(days=5),
-            "members": [("volkova", "lead"), ("morozov", "member"), ("pavlov", "member"), ("belov", "member")],
+            "members": [
+                ("volkova", "lead"),   # Trust=44 mixed   · SRI=58 passive
+                ("morozov", "member"), # Trust=24 info    · SRI=35 standard
+                ("pavlov",  "member"), # Trust=30 info    · SRI=48 standard
+                ("belov",   "member"), # Trust=18 info    · SRI=18 active
+            ],
             "tasks": [
-                ("Собрать примеры сортировок", "Подготовить наглядные шаги пузырьковой сортировки.", "volkova", "done", now - timedelta(days=1)),
-                ("Сделать карточку по бинарному поиску", "Описать алгоритм простыми словами.", "morozov", "in_progress", None),
-                ("Подготовить памятку по O-нотации", "Сделать короткий лист с примерами сложностей.", "pavlov", "pending", None),
-                ("Проверить понятность формулировок", "Отметить места, где нужна дополнительная подсказка.", "belov", "pending", None),
+                # Волкова: 2 done → имеет >60% всех выполненных задач → дисбаланс
+                ("Анализ пузырьковой сортировки",
+                 "Описать шаги, привести пример, указать сложность.",
+                 "volkova", "done", now - timedelta(hours=20)),
+                ("Анализ быстрой сортировки",
+                 "Описать QuickSort, псевдокод, лучший/худший случай.",
+                 "volkova", "done", now - timedelta(hours=8)),
+                # Морозов: in_progress — получит deadline-рекомендацию (informational)
+                ("Карточка по бинарному поиску",
+                 "Описать алгоритм простыми словами, пример поиска числа.",
+                 "morozov", "in_progress", None),
+                # Павлов: pending — получит deadline + imbalance (informational)
+                ("Памятка по O-нотации",
+                 "Три примера: O(1), O(n), O(log n) с пояснениями.",
+                 "pavlov", "pending", None),
+                # Белов: pending — получит deadline + imbalance (informational)
+                ("Сравнительная таблица алгоритмов",
+                 "Таблица: название, сложность, стабильность, применение.",
+                 "belov", "pending", None),
+                # Неназначенная задача — войдёт в lead_report
+                ("Оформление итоговой презентации",
+                 "Собрать все части в единый слайд-документ.",
+                 None, "pending", None),
             ],
         },
+        # ── Проект 2: ПРЕДУПРЕДИТЕЛЬНЫЙ дедлайн (5 дней) ────────────────────
+        # Демонстрирует mixed и autonomous Trust-режим при формировании рекомендаций.
+        {
+            "title": "Адаптивный тренажер по Python",
+            "description": (
+                "Команда собирает задания по Python и проверяет адаптацию под разные профили. "
+                "Демо: средний дедлайн (5 дней), Trust-режимы mixed и autonomous."
+            ),
+            "teacher": teachers["teacher"],
+            "topic": topics["python"],
+            "status": "active",
+            "max_members": 4,
+            "deadline": now + timedelta(days=5),
+            "created_at": now - timedelta(days=4),
+            "members": [
+                ("student",  "lead"),   # Trust=68 autonomous · SRI=72 passive
+                ("kozlov",  "member"),  # Trust=59 mixed      · SRI=62 passive
+                ("fedorov", "member"),  # Trust=53 mixed      · SRI=44 standard
+            ],
+            "tasks": [
+                # Петров: done → получит "ваша часть готова" (autonomous)
+                ("Подготовить базовые упражнения",
+                 "Набор задач на input, if и циклы.",
+                 "student", "done", now - timedelta(days=2)),
+                # Козлов: in_progress → получит deadline-рекомендацию (mixed)
+                ("Разбить задания по уровням",
+                 "Определить простые, средние и сложные задания.",
+                 "kozlov", "in_progress", None),
+                # Федоров: pending → получит deadline-рекомендацию (mixed)
+                ("Проверить объяснения к тестам",
+                 "Уточнить формулировки и пояснения после ответов.",
+                 "fedorov", "pending", None),
+            ],
+        },
+        # ── Проект 3: ЗАВЕРШЁННЫЙ, сильная команда ──────────────────────────
+        # Показывает completed-статус и высокий командный Trust Score.
         {
             "title": "Мини-справочник по ООП",
-            "description": "Завершенный проект с сильной командой: показывает сценарий completed и высокий командный Trust Score.",
+            "description": (
+                "Завершённый проект с сильной командой. "
+                "Trust Score всех участников >77: автономный режим."
+            ),
             "teacher": teachers["teacher"],
             "topic": topics["oop"],
             "status": "completed",
             "max_members": 3,
             "deadline": now - timedelta(days=2),
             "created_at": now - timedelta(days=12),
-            "members": [("sidorova", "lead"), ("egorova", "member"), ("novikova", "member")],
+            "members": [
+                ("sidorova", "lead"),   # Trust=86 autonomous · SRI=90 minimal
+                ("egorova",  "member"), # Trust=77 autonomous · SRI=78 minimal
+                ("novikova", "member"), # Trust=71 autonomous · SRI=84 minimal
+            ],
             "tasks": [
-                ("Подготовить примеры классов", "Собрать три коротких кейса по классам и объектам.", "sidorova", "done", now - timedelta(days=5)),
-                ("Описать наследование", "Добавить диаграмму Parent и Child.", "egorova", "done", now - timedelta(days=4)),
-                ("Подготовить блок по полиморфизму", "Сделать один практический пример с общим интерфейсом.", "novikova", "done", now - timedelta(days=3)),
+                ("Примеры классов и объектов",
+                 "Три коротких кейса по классам.",
+                 "sidorova", "done", now - timedelta(days=5)),
+                ("Наследование: диаграмма Parent → Child",
+                 "Схема и пример кода.",
+                 "egorova", "done", now - timedelta(days=4)),
+                ("Полиморфизм: общий интерфейс",
+                 "Практический пример с базовым классом.",
+                 "novikova", "done", now - timedelta(days=3)),
             ],
         },
+        # ── Проект 4: АРХИВНЫЙ ──────────────────────────────────────────────
         {
             "title": "Банк стартовых задач",
             "description": "Архивный проект с заготовками для новичков.",
@@ -658,12 +755,18 @@ def create_projects(
             "created_at": now - timedelta(days=25),
             "members": [("antonova", "lead")],
             "tasks": [
-                ("Собрать стартовые упражнения", "Список коротких заданий по спискам и словарям.", "antonova", "done", now - timedelta(days=16)),
+                ("Стартовые упражнения по спискам",
+                 "Список коротких заданий по спискам и словарям.",
+                 "antonova", "done", now - timedelta(days=16)),
             ],
         },
+        # ── Проект 5: ПУСТОЙ — для демонстрации вступления ─────────────────
         {
             "title": "Командный разбор типичных ошибок",
-            "description": "Пустой активный проект для демонстрации сценария вступления нового участника.",
+            "description": (
+                "Открытый проект без участников. "
+                "Демо: вступление нового студента, получение первого тимлида."
+            ),
             "teacher": teachers["teacher"],
             "topic": topics["data"],
             "status": "active",
@@ -696,10 +799,10 @@ def create_projects(
                 joined_at=project.created_at + timedelta(hours=idx * 4),
             ))
         db.session.flush()
-        for title, description, assignee, status, completed_at in spec["tasks"]:
+        for task_title, description, assignee, status, completed_at in spec["tasks"]:
             db.session.add(ProjectTask(
                 project_id=project.id,
-                title=title,
+                title=task_title,
                 description=description,
                 assigned_to=students[assignee].id if assignee else None,
                 status=status,
